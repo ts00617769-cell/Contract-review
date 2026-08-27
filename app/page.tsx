@@ -15,20 +15,25 @@ export default async function HomePage() {
           </span>
           <p className="text-sm tracking-[0.28em] text-[var(--brass)]">契約哨兵</p>
         </div>
-        <h1 className="mt-5 max-w-3xl font-serif text-4xl leading-tight md:text-5xl">
-          把客戶丟來的 PDF
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">
+          台灣接案者專屬合約防雷工具，30 秒抓出智財權與付款陷阱。
+        </p>
+        <h1 className="mt-4 max-w-3xl font-serif text-4xl leading-tight md:text-5xl">
+          專為自由職業者與接案團隊打造的
           <br />
-          先標出不該默默簽名的句子。
+          「合約避坑 AI」
         </h1>
         <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--muted)]">
-          給台灣接案設計師與行銷顧問的合約 AI 初審。上傳 PDF 後，標註不對等條款、模糊付款與智財轉讓陷阱，並附上修改建議。沒有
-          API 金鑰時改走在地規則庫。
+          30 秒抓出著作權陷阱、無限修改條款與延期付款，並一鍵生成委婉修約回信。
+        </p>
+        <p className="mt-3 inline-flex rounded-full border border-[var(--line)] bg-[var(--paper)]/80 px-3 py-1 text-xs text-[var(--muted)]">
+          支援繁體中文合約 · 比對台灣民法與著作權常見爭議
         </p>
         <ul className="mt-8 grid gap-3 text-sm md:grid-cols-3">
           {[
-            ["不對等", "隨時終止、無限修改、無限賠償、過寬競業"],
-            ["付款", "滿意後才付、先發票、長帳期、KPI 保證"],
-            ["智財", "未付款就轉讓、原始檔、未採用稿、禁作品集"],
+            ["不對等", "無限修改、無驗收期限、過寬競業"],
+            ["付款", "結算後 90 天、缺少訂金、先發票"],
+            ["智財", "著作人格權拋棄、未付清就移轉"],
           ].map(([title, detail]) => (
             <li
               key={title}

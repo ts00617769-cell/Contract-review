@@ -24,4 +24,9 @@ export type ReviewResult = {
 
 export type QuotaState = {
   used: boolean;
+  remaining: number;
+  limit: number;
+  period: string;
 };
+
+export type CheckoutProvider = "stripe" | "lemonsqueezy";

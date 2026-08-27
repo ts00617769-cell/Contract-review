@@ -15,7 +15,11 @@ export function scanWithRuleLibrary(rawText: string): Finding[] {
     if (rule.absent) {
       const patterns = rule.absencePatterns ?? [];
       const hit = patterns.some((pattern) => pattern.test(text));
-      if (!hit) {
+      const contextPatterns = rule.contextPatterns ?? [];
+      const hasRequiredContext =
+        contextPatterns.length === 0 ||
+        contextPatterns.some((pattern) => pattern.test(text));
+      if (!hit && hasRequiredContext) {
         findings.push({
           id: `rule-${rule.id}`,
           category: rule.category,

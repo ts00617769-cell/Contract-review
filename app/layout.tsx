@@ -17,8 +17,9 @@ const serif = Noto_Serif_TC({
 });
 
 export const metadata: Metadata = {
-  title: "契約哨兵｜台灣接案合約 AI 初審",
-  description: `給設計師與行銷顧問的合約風險標註。${DISCLAIMER_SHORT}`,
+  title: "契約哨兵｜台灣接案者專屬合約避坑 AI",
+  description:
+    "30 秒抓出著作權陷阱、無限修改與延期付款，並一鍵生成委婉修約回信。支援繁體中文，比對台灣民法與著作權常見爭議。",
 };
 
 export default function RootLayout({

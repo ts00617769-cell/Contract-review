@@ -19,13 +19,15 @@ export function PdfPreview({ file }: PdfPreviewProps) {
     host.replaceChildren();
     setError(null);
 
-    const objectUrl = URL.createObjectURL(file);
-
     (async () => {
       const pdfjs = await import("pdfjs-dist");
-      pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        "pdfjs-dist/build/pdf.worker.min.mjs",
+        import.meta.url,
+      ).toString();
 
-      const pdf = await pdfjs.getDocument({ url: objectUrl }).promise;
+      const data = new Uint8Array(await file.arrayBuffer());
+      const pdf = await pdfjs.getDocument({ data, enableXfa: false }).promise;
       if (cancelled) return;
       setPages(pdf.numPages);
 
@@ -48,7 +50,6 @@ export function PdfPreview({ file }: PdfPreviewProps) {
 
     return () => {
       cancelled = true;
-      URL.revokeObjectURL(objectUrl);
     };
   }, [file]);
 
