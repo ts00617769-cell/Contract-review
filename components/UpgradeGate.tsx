@@ -5,14 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { readPaddleBrowserConfig } from "@/lib/paddle";
-import { PRICING_TIERS, isPaidTier } from "@/lib/pricing-tiers";
+import { oneTimePriceId } from "@/lib/pricing-tiers";
 
 type UpgradeGateProps = {
   onUnlocked?: () => void;
 };
 
-const proTier = PRICING_TIERS.find((tier) => tier.name === "專業版");
-const PRO_MONTHLY = proTier && isPaidTier(proTier) ? proTier.priceId.month : "";
+const ONE_TIME_PRICE = oneTimePriceId();
 
 export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
   const router = useRouter();
@@ -85,12 +84,12 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
       setError("結帳元件還在載入，請稍候再點一次。");
       return;
     }
-    if (!PRO_MONTHLY) {
-      setError("尚未設定專業版月繳 Price ID。");
+    if (!ONE_TIME_PRICE) {
+      setError("尚未設定單次解鎖 Price ID。");
       return;
     }
     paddle.Checkout.open({
-      items: [{ priceId: PRO_MONTHLY, quantity: 1 }],
+      items: [{ priceId: ONE_TIME_PRICE, quantity: 1 }],
       settings: {
         displayMode: "overlay",
         variant: "one-page",
@@ -115,7 +114,7 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
           解鎖這份合約的完整拆解與修約信
         </h2>
         <p className="mt-3 text-sm leading-7 text-zinc-500">
-          付款完成後立刻打開踩雷原因、談判開場白、替代條款，並可下載修約信。同一裝置本月不限份數。
+          單次付款即可打開這份報告。需要不限份數時，再看專業版或大師版訂閱。
         </p>
       </div>
 
@@ -131,18 +130,18 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
         </article>
         <article className="rounded-xl border border-zinc-950 bg-zinc-950 p-5 text-white dark:border-zinc-700">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold">專業版</p>
+            <p className="text-sm font-semibold">單次解鎖</p>
             <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-bold uppercase tracking-widest">
-              Paddle
+              $2.99
             </span>
           </div>
           <p className="mt-3 text-sm leading-6 text-zinc-300">
-            價格依所在國家顯示。大師版與年繳請到方案頁。
+            一次付清，不自動續訂。訂閱方案請到方案頁。
           </p>
           <ul className="mt-5 space-y-2 text-sm text-zinc-300">
-            <li>完整風險報告</li>
+            <li>這份合約的完整風險報告</li>
             <li>修約信複製與下載</li>
-            <li>不限份數分析</li>
+            <li>同一裝置本月可回看</li>
           </ul>
         </article>
       </div>
@@ -157,14 +156,14 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
           {loading
             ? "確認付款中…"
             : ready || !config.ok
-              ? "用 Paddle 解鎖完整報告"
+              ? "單次解鎖這份報告"
               : "載入結帳…"}
         </button>
         <Link
           href="/pricing"
           className="rounded-lg border border-zinc-300 px-5 py-3 text-sm font-semibold text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-900"
         >
-          查看專業版與大師版
+          查看訂閱方案
         </Link>
       </div>
       {error ? (

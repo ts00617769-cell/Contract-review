@@ -49,6 +49,6 @@ export function paddleConfigured(): boolean {
 
 /** @deprecated Prefer PRICING_TIERS. Kept so older unlock paths still compile. */
 export const PADDLE_PRICE_ID =
-  process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTH?.trim() ||
+  process.env.NEXT_PUBLIC_PADDLE_PRICE_ONETIME?.trim() ||
   process.env.NEXT_PUBLIC_PADDLE_PRICE_ID?.trim() ||
   "pri_01m132przkafxjxvmvy5kjrdg3";

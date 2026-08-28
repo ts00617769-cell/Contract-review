@@ -7,9 +7,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { readPaddleBrowserConfig } from "@/lib/paddle";
 import {
   PRICING_TIERS,
-  isPaidTier,
+  checkoutPriceId,
+  isFreeTier,
+  isOneTimeTier,
   type BillingCycle,
-  type PaidTier,
+  type Tier,
 } from "@/lib/pricing-tiers";
 
 type PriceMap = Record<string, string>;
@@ -31,10 +33,12 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
 
   const itemsForPreview = useMemo(() => {
     const ids = new Set<string>();
-    for (const tier of PRICING_TIERS) {
-      if (!isPaidTier(tier)) continue;
-      if (tier.priceId.month) ids.add(tier.priceId.month);
-      if (tier.priceId.year) ids.add(tier.priceId.year);
+    for (const id of PRICING_TIERS.flatMap((tier) => {
+      if (isFreeTier(tier)) return [];
+      if (isOneTimeTier(tier)) return tier.priceId ? [tier.priceId] : [];
+      return [tier.priceId.month, tier.priceId.year].filter(Boolean);
+    })) {
+      ids.add(id);
     }
     return [...ids].map((priceId) => ({ priceId, quantity: 1 }));
   }, []);
@@ -65,7 +69,7 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
 
       if (itemsForPreview.length === 0) {
         setLoadingPrices(false);
-        setError("尚未設定任何付費 Price ID。請到 Paddle Catalog 建立專業版／大師版價格。");
+        setError("尚未設定任何付費 Price ID。");
         return;
       }
 
@@ -102,15 +106,18 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
     };
   }, [config, countryCode, itemsForPreview, router]);
 
-  function openCheckout(tier: PaidTier) {
+  function openCheckout(tier: Tier) {
     setError(null);
+    if (isFreeTier(tier)) return;
     if (!config.ok) {
       setError(config.error);
       return;
     }
-    const priceId = tier.priceId[cycle];
+    const priceId = checkoutPriceId(tier, cycle);
     if (!priceId) {
-      setError(`${tier.name} 尚未設定${cycle === "month" ? "月繳" : "年繳"} Price ID。`);
+      setError(
+        `${tier.name} 尚未設定${isOneTimeTier(tier) ? "單次" : cycle === "month" ? "月繳" : "年繳"} Price ID。`,
+      );
       return;
     }
     const paddle = paddleRef.current;
@@ -155,12 +162,13 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
           ))}
         </div>
       </div>
-      <p className="mt-3 text-center text-xs text-zinc-400">月繳／年繳只影響專業版與大師版。入門版維持免費。</p>
+      <p className="mt-3 text-center text-xs text-zinc-400">
+        月繳／年繳只影響專業版與大師版。入門版免費，單次解鎖為一次付清。
+      </p>
 
-      <div className="mt-8 grid gap-4 lg:grid-cols-3">
+      <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {PRICING_TIERS.map((tier) => {
-          const paid = isPaidTier(tier);
-          const priceId = paid ? tier.priceId[cycle] : "";
+          const priceId = checkoutPriceId(tier, cycle);
           const amount = priceId ? prices[priceId] : undefined;
           return (
             <article
@@ -173,15 +181,19 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
             >
               <div className="flex items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold">{tier.name}</h2>
-                {tier.highlighted ? (
+                {isOneTimeTier(tier) ? (
                   <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-bold uppercase tracking-widest">
-                    建議
+                    一次
                   </span>
-                ) : tier.free ? (
+                ) : isFreeTier(tier) ? (
                   <span className="rounded-md border border-zinc-200 px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:border-zinc-700">
                     免費
                   </span>
-                ) : null}
+                ) : (
+                  <span className="rounded-md border border-zinc-200 px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:border-zinc-700">
+                    訂閱
+                  </span>
+                )}
               </div>
               <p
                 className={`mt-2 text-sm leading-6 ${
@@ -191,7 +203,7 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
                 {tier.description}
               </p>
               <p className="mt-6 text-3xl font-semibold tracking-tight">
-                {tier.free ? (
+                {isFreeTier(tier) ? (
                   <>
                     $0
                     <span className="ml-1 text-sm font-normal text-zinc-500">/ 月</span>
@@ -206,7 +218,7 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
                         tier.highlighted ? "text-zinc-400" : "text-zinc-500"
                       }`}
                     >
-                      / {cycle === "month" ? "月" : "年"}
+                      {isOneTimeTier(tier) ? "/ 次" : cycle === "month" ? "/ 月" : "/ 年"}
                     </span>
                   </>
                 ) : (
@@ -222,7 +234,7 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
                   <li key={feature}>{feature}</li>
                 ))}
               </ul>
-              {tier.free ? (
+              {isFreeTier(tier) ? (
                 <Link
                   href="/"
                   className="mt-8 rounded-lg border border-zinc-300 px-4 py-3 text-center text-sm font-semibold text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-900"
@@ -240,7 +252,7 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
                       : "bg-zinc-950 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950"
                   }`}
                 >
-                  Subscribe
+                  {isOneTimeTier(tier) ? "單次解鎖" : "Subscribe"}
                 </button>
               )}
             </article>

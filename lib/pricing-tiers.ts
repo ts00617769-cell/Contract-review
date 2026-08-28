@@ -1,6 +1,6 @@
 export type BillingCycle = "month" | "year";
 export type PaidTierName = "專業版" | "大師版";
-export type TierName = "入門版" | PaidTierName;
+export type TierName = "入門版" | "單次解鎖" | PaidTierName;
 
 export type FreeTier = {
   name: "入門版";
@@ -10,24 +10,37 @@ export type FreeTier = {
   free: true;
 };
 
-export type PaidTier = {
+export type OneTimeTier = {
+  name: "單次解鎖";
+  description: string;
+  features: string[];
+  highlighted?: boolean;
+  oneTime: true;
+  priceId: string;
+};
+
+export type SubscriptionTier = {
   name: PaidTierName;
   description: string;
   features: string[];
   highlighted?: boolean;
-  free?: false;
   priceId: { month: string; year: string };
 };
 
-export type Tier = FreeTier | PaidTier;
+export type Tier = FreeTier | OneTimeTier | SubscriptionTier;
 
 function envPrice(name: string, fallback = ""): string {
   return process.env[name]?.trim() || fallback;
 }
 
+const ONE_TIME_PRICE =
+  envPrice("NEXT_PUBLIC_PADDLE_PRICE_ONETIME") ||
+  envPrice("NEXT_PUBLIC_PADDLE_PRICE_ID") ||
+  "pri_01m132przkafxjxvmvy5kjrdg3";
+
 /**
  * Paid Price IDs come from Paddle Catalog (`pri_...`) or env vars.
- * 入門版 is free and never goes through Paddle.
+ * 入門版 is free. 單次解鎖 is a one-time Paddle price. 專業版／大師版 are subscriptions.
  */
 export const PRICING_TIERS: Tier[] = [
   {
@@ -42,8 +55,20 @@ export const PRICING_TIERS: Tier[] = [
     ],
   },
   {
-    name: "專業版",
+    name: "單次解鎖",
+    oneTime: true,
     highlighted: true,
+    description: "只解鎖這次分析，適合偶爾才要拆合約。",
+    features: [
+      "這份合約的完整風險報告",
+      "修約信複製與下載",
+      "一次付清，不自動續訂",
+      "同一裝置本月可持續查看",
+    ],
+    priceId: ONE_TIME_PRICE,
+  },
+  {
+    name: "專業版",
     description: "不限份數分析，接案旺季也不用算額度。",
     features: [
       "不限份數完整風險報告",
@@ -52,10 +77,7 @@ export const PRICING_TIERS: Tier[] = [
       "同一裝置本月持續解鎖",
     ],
     priceId: {
-      month: envPrice(
-        "NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTH",
-        envPrice("NEXT_PUBLIC_PADDLE_PRICE_ID", "pri_01m132przkafxjxvmvy5kjrdg3"),
-      ),
+      month: envPrice("NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTH"),
       year: envPrice("NEXT_PUBLIC_PADDLE_PRICE_PRO_YEAR"),
     },
   },
@@ -75,14 +97,36 @@ export const PRICING_TIERS: Tier[] = [
   },
 ];
 
-export function isPaidTier(tier: Tier): tier is PaidTier {
-  return !tier.free;
+export function isFreeTier(tier: Tier): tier is FreeTier {
+  return "free" in tier && tier.free === true;
+}
+
+export function isOneTimeTier(tier: Tier): tier is OneTimeTier {
+  return "oneTime" in tier && tier.oneTime === true;
+}
+
+export function isSubscriptionTier(tier: Tier): tier is SubscriptionTier {
+  return !isFreeTier(tier) && !isOneTimeTier(tier);
+}
+
+export function oneTimePriceId(): string {
+  return ONE_TIME_PRICE;
+}
+
+export function checkoutPriceId(tier: Tier, cycle: BillingCycle): string {
+  if (isFreeTier(tier)) return "";
+  if (isOneTimeTier(tier)) return tier.priceId;
+  return tier.priceId[cycle];
 }
 
 export function allConfiguredPriceIds(): string[] {
   const ids = new Set<string>();
   for (const tier of PRICING_TIERS) {
-    if (!isPaidTier(tier)) continue;
+    if (isFreeTier(tier)) continue;
+    if (isOneTimeTier(tier)) {
+      if (tier.priceId) ids.add(tier.priceId);
+      continue;
+    }
     if (tier.priceId.month) ids.add(tier.priceId.month);
     if (tier.priceId.year) ids.add(tier.priceId.year);
   }
