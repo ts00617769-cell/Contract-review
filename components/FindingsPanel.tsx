@@ -10,18 +10,18 @@ const RISK_STYLE: Record<
   { label: string; badge: string; edge: string }
 > = {
   high: {
-    label: "Danger",
+    label: "高風險",
     badge: "border-red-200 bg-red-50 text-red-700 dark:border-red-950 dark:bg-red-950/40 dark:text-red-400",
     edge: "border-l-red-500",
   },
   medium: {
-    label: "Warning",
+    label: "需注意",
     badge:
       "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-950 dark:bg-amber-950/40 dark:text-amber-400",
     edge: "border-l-amber-500",
   },
   low: {
-    label: "Safe",
+    label: "較安全",
     badge:
       "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-400",
     edge: "border-l-emerald-500",
@@ -74,7 +74,7 @@ export function FindingsPanel({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
-              Review summary
+              合約掃描摘要
             </p>
             <h2 className="mt-2 text-lg font-semibold text-zinc-950 dark:text-white">
               先看結論
@@ -82,13 +82,13 @@ export function FindingsPanel({
           </div>
           <div className="flex gap-2 text-xs font-semibold">
             <span className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-red-700 dark:border-red-950 dark:bg-red-950/40 dark:text-red-400">
-              {count(result, "high")} Danger
+              {count(result, "high")} 高風險
             </span>
             <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-amber-700 dark:border-amber-950 dark:bg-amber-950/40 dark:text-amber-400">
-              {count(result, "medium")} Warning
+              {count(result, "medium")} 需注意
             </span>
             <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-700 dark:border-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-400">
-              {count(result, "low")} Safe
+              {count(result, "low")} 較安全
             </span>
           </div>
         </div>
@@ -114,83 +114,110 @@ export function FindingsPanel({
           return (
             <li
               key={item.id}
-              className={`rounded-2xl border border-l-4 border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 ${style.edge}`}
+              className={`overflow-hidden rounded-2xl border border-l-4 border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950 ${style.edge}`}
             >
-              <div className="flex min-w-0 items-start gap-3">
-                <span className="mt-0.5 font-mono text-xs text-zinc-400">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={`rounded-md border px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${style.badge}`}
-                    >
-                      {style.label}
-                    </span>
-                    {item.ruleId ? (
-                      <span className="font-mono text-[11px] text-zinc-400">
-                        {item.ruleId}
+              <div className="p-5 sm:p-6">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="mt-0.5 font-mono text-xs text-zinc-400">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={`rounded-md border px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${style.badge}`}
+                      >
+                        {style.label}
                       </span>
-                    ) : null}
+                      {item.ruleId ? (
+                        <span className="font-mono text-[11px] text-zinc-400">
+                          {item.ruleId}
+                        </span>
+                      ) : null}
+                    </div>
+                    <h3 className="mt-2 text-base font-semibold text-zinc-950 dark:text-white">
+                      {item.title}
+                    </h3>
                   </div>
-                  <h3 className="mt-2 text-base font-semibold text-zinc-950 dark:text-white">
-                    {item.title}
-                  </h3>
                 </div>
+
+                <p className="mt-4 border-t border-zinc-100 pt-4 text-base font-semibold leading-7 text-zinc-900 dark:border-zinc-900 dark:text-zinc-100">
+                  {item.verdict}
+                </p>
               </div>
 
-              <p className="mt-4 text-base font-semibold leading-7 text-zinc-900 dark:text-zinc-100">
-                {item.verdict}
-              </p>
-
               <div
-                className={`mt-5 space-y-5 ${locked ? "pointer-events-none select-none blur-[6px]" : ""}`}
+                className={`${locked ? "pointer-events-none select-none blur-[6px]" : ""}`}
               >
-                <section>
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400">
-                    原條款
-                  </p>
-                  <blockquote className="mt-2 rounded-lg bg-zinc-100 p-3 text-sm leading-6 text-zinc-600 line-through decoration-red-500/60 dark:bg-zinc-900 dark:text-zinc-400">
+                <section className="border-t border-zinc-200 bg-zinc-50/70 p-5 dark:border-zinc-800 dark:bg-zinc-900/40 sm:p-6">
+                  <div className="flex items-center gap-2">
+                    <span className="grid h-5 w-5 place-items-center rounded-full border border-zinc-300 bg-white font-mono text-[10px] text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950">
+                      1
+                    </span>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
+                      原條款
+                    </p>
+                  </div>
+                  <blockquote className="mt-3 border-l-2 border-zinc-300 pl-4 text-sm leading-7 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
                     {item.quote}
                   </blockquote>
                 </section>
-                <section>
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-red-500">
-                    踩雷原因
-                  </p>
-                  <p className="mt-2 text-sm leading-7 text-zinc-700 dark:text-zinc-300">
+                <div className="relative h-7 border-y border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+                  <span className="absolute left-8 top-1/2 -translate-y-1/2 text-sm text-zinc-400" aria-hidden>
+                    ↓
+                  </span>
+                </div>
+                <section className="bg-red-50/40 p-5 dark:bg-red-950/10 sm:p-6">
+                  <div className="flex items-center gap-2">
+                    <span className="grid h-5 w-5 place-items-center rounded-full border border-red-200 bg-white font-mono text-[10px] text-red-600 dark:border-red-950 dark:bg-zinc-950">
+                      2
+                    </span>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-red-600 dark:text-red-400">
+                      踩雷原因
+                    </p>
+                  </div>
+                  <p className="mt-3 text-sm leading-7 text-zinc-700 dark:text-zinc-300">
                     {item.riskDetail}
                   </p>
                 </section>
-                <section>
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
-                    老鳥怎麼開口
-                  </p>
-                  <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50/70 p-3 text-sm leading-7 text-amber-950 dark:border-amber-950 dark:bg-amber-950/20 dark:text-amber-100">
-                    {item.counterMeasure}
-                  </p>
-                </section>
-                <section>
+                <div className="relative h-7 border-y border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+                  <span className="absolute left-8 top-1/2 -translate-y-1/2 text-sm text-zinc-400" aria-hidden>
+                    ↓
+                  </span>
+                </div>
+                <section className="bg-emerald-50/40 p-5 dark:bg-emerald-950/10 sm:p-6">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
-                      直接換成這條
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="grid h-5 w-5 place-items-center rounded-full border border-emerald-200 bg-white font-mono text-[10px] text-emerald-700 dark:border-emerald-950 dark:bg-zinc-950">
+                        3
+                      </span>
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
+                        建議修改版本
+                      </p>
+                    </div>
                     <button
                       type="button"
                       disabled={locked}
                       onClick={() => void copyClause(item)}
-                      className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-800 transition hover:bg-zinc-100 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                      className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-800 shadow-sm transition hover:border-zinc-400 hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
                     >
-                      {copiedId === item.id ? "已複製" : "一鍵複製新條款"}
+                      {copiedId === item.id ? "已複製改約內容" : "複製改約內容"}
                     </button>
                   </div>
-                  <p className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-sm leading-7 text-emerald-950 dark:border-emerald-950 dark:bg-emerald-950/20 dark:text-emerald-100">
+                  <p className="mt-3 rounded-lg border border-emerald-200 bg-white p-4 text-sm leading-7 text-zinc-800 dark:border-emerald-950 dark:bg-zinc-950 dark:text-zinc-200">
                     {item.suggestedClause}
+                  </p>
+                </section>
+                <section className="border-t border-zinc-200 p-5 dark:border-zinc-800 sm:p-6">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">
+                    談判時可以這樣說
+                  </p>
+                  <p className="mt-2 text-sm leading-7 text-zinc-700 dark:text-zinc-300">
+                    {item.counterMeasure}
                   </p>
                 </section>
               </div>
 
-              <div className="mt-5 border-t border-zinc-100 pt-4 text-right dark:border-zinc-900">
+              <div className="border-t border-zinc-200 px-5 py-4 text-right dark:border-zinc-800 sm:px-6">
                 {locked ? (
                   <p className="text-xs font-medium text-zinc-400">
                     解鎖後可複製條款與下載修約信
@@ -211,18 +238,18 @@ export function FindingsPanel({
       </ol>
 
       {result.findings.length > 0 && !locked ? (
-        <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6 text-white dark:border-zinc-700">
-          <p className="text-lg font-semibold">不想自己組句子？</p>
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5 text-white sm:p-6 dark:border-zinc-700">
+          <p className="text-lg font-semibold">把風險整理成一封能直接寄出的信</p>
           <p className="mt-2 text-sm leading-6 text-zinc-400">
             把所有紅黃項目整理成一封有立場、但不會撕破臉的修約信。
           </p>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
               onClick={() => openEmail()}
               className="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-zinc-200"
             >
-              生成修約信
+              一鍵生成委婉修約信
             </button>
             <button
               type="button"

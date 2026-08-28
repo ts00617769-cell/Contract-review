@@ -112,16 +112,16 @@ export function ReviewApp({
 
   return (
     <div className="space-y-8">
-      <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="border-b border-zinc-200 px-5 pt-5 dark:border-zinc-800 md:px-7">
+      <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03),0_12px_32px_rgba(0,0,0,0.04)] dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="border-b border-zinc-200 px-4 pt-4 dark:border-zinc-800 sm:px-5 sm:pt-5 md:px-7">
           <div
             role="tablist"
             aria-label="合約輸入方式"
-            className="inline-flex rounded-lg bg-zinc-100 p-1 text-sm dark:bg-zinc-900"
+            className="grid w-full grid-cols-2 rounded-lg bg-zinc-100 p-1 text-sm sm:inline-grid sm:w-auto dark:bg-zinc-900"
           >
             {[
-              ["file", "上傳 PDF / Word"],
-              ["text", "直接貼上合約文字"],
+              ["file", "上傳 PDF"],
+              ["text", "文字貼上"],
             ].map(([value, label]) => (
               <button
                 key={value}
@@ -129,7 +129,7 @@ export function ReviewApp({
                 role="tab"
                 aria-selected={mode === value}
                 onClick={() => switchMode(value as InputMode)}
-                className={`rounded-md px-4 py-2 font-medium transition ${
+                className={`rounded-md px-4 py-2.5 font-medium transition ${
                   mode === value
                     ? "bg-white text-zinc-950 shadow-sm dark:bg-zinc-800 dark:text-white"
                     : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
@@ -139,14 +139,15 @@ export function ReviewApp({
               </button>
             ))}
           </div>
-          <p className="py-4 text-xs text-zinc-500">
-            每月免費分析 1 份，踩雷範本不扣額度。檔案只用於這次分析。
+          <p className="py-3.5 text-xs leading-5 text-zinc-500">
+            支援 PDF 與 Word（.docx）· 每月免費分析 1 份 · 範例不扣額度
           </p>
         </div>
 
-        <div className="p-5 md:p-7">
+        <div className="p-4 sm:p-5 md:p-7">
           {mode === "file" ? (
             <label
+              role="tabpanel"
               onDragOver={(event) => {
                 event.preventDefault();
                 setDragging(true);
@@ -157,7 +158,7 @@ export function ReviewApp({
                 setDragging(false);
                 onFile(event.dataTransfer.files[0] ?? null);
               }}
-              className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed px-6 py-12 text-center transition ${
+              className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed px-5 py-10 text-center transition sm:px-6 sm:py-12 ${
                 dragging
                   ? "border-zinc-950 bg-zinc-50 dark:border-white dark:bg-zinc-900"
                   : "border-zinc-300 bg-zinc-50/60 hover:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900/40"
@@ -169,11 +170,11 @@ export function ReviewApp({
                 className="sr-only"
                 onChange={(event) => onFile(event.target.files?.[0] ?? null)}
               />
-              <span className="grid h-10 w-10 place-items-center rounded-lg border border-zinc-200 bg-white text-lg dark:border-zinc-700 dark:bg-zinc-900">
+              <span className="grid h-10 w-10 place-items-center rounded-lg border border-zinc-200 bg-white text-lg shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
                 ↑
               </span>
               <span className="mt-4 text-sm font-semibold text-zinc-950 dark:text-zinc-50">
-                拖進來，或點這裡選檔
+                拖曳合約到這裡，或點擊選擇檔案
               </span>
               <span className="mt-1 text-xs text-zinc-500">
                 PDF、Word .docx · 上限 10MB
@@ -185,7 +186,7 @@ export function ReviewApp({
               ) : null}
             </label>
           ) : (
-            <div>
+            <div role="tabpanel">
               <textarea
                 value={contractText}
                 onChange={(event) => {
@@ -202,12 +203,20 @@ export function ReviewApp({
             </div>
           )}
 
+          <div
+            aria-label="隱私保障"
+            className="mt-4 flex flex-col gap-2 border-y border-zinc-100 py-3 text-xs font-medium text-zinc-500 sm:flex-row sm:items-center sm:gap-0 sm:divide-x sm:divide-zinc-200 dark:border-zinc-900 dark:text-zinc-400 dark:sm:divide-zinc-800"
+          >
+            <span className="sm:pr-4">🔒 不儲存任何合約內容</span>
+            <span className="sm:pl-4">🛡️ 不作為 AI 訓練資料</span>
+          </div>
+
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
             <button
               type="button"
               disabled={!canSubmit}
               onClick={() => void submitReview()}
-              className="rounded-lg bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-35 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+              className="rounded-lg bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-35 sm:w-auto dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
             >
               {loading ? "正在拆合約…" : quotaUsed && !paid ? "本月免費額度已用完" : "開始抓雷"}
             </button>
@@ -215,9 +224,9 @@ export function ReviewApp({
               type="button"
               disabled={loading}
               onClick={() => void reviewSample()}
-              className="rounded-lg border border-zinc-300 bg-white px-5 py-3 text-sm font-semibold text-zinc-800 transition hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
+              className="rounded-lg border border-zinc-300 bg-white px-5 py-3 text-sm font-semibold text-zinc-800 transition hover:border-zinc-400 hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
             >
-              點我載入真實接案踩雷範本
+              ⚡ 載入真實接案踩雷範例
             </button>
           </div>
           {error ? (
