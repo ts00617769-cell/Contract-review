@@ -22,6 +22,7 @@ export type ReviewResult = {
   pageCount: number;
   fileName: string;
   usedFallback: boolean;
+  isSample?: boolean;
 };
 
 export type QuotaState = {

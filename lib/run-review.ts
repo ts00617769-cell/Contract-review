@@ -28,6 +28,7 @@ export async function runContractReview(options: {
     findings: scanWithRuleLibrary(options.text),
     pageCount: options.pageCount,
     fileName: options.fileName,
+    isSample: Boolean(options.preferRulesOnly),
   };
   result.summary =
     result.findings.length > 0
@@ -47,6 +48,7 @@ export async function runContractReview(options: {
       findings: mergeFindings(ai.findings, result.findings),
       pageCount: options.pageCount,
       fileName: options.fileName,
+      isSample: Boolean(options.preferRulesOnly),
     };
   } catch {
     return {

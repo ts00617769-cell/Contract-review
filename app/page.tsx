@@ -1,8 +1,9 @@
 import { ReviewApp } from "@/components/ReviewApp";
-import { hasUsedFreeReview } from "@/lib/quota";
+import { hasPaidAccess, hasUsedFreeReview } from "@/lib/quota";
 
 export default async function HomePage() {
-  const quotaUsed = await hasUsedFreeReview();
+  const paid = await hasPaidAccess();
+  const quotaUsed = paid ? false : await hasUsedFreeReview();
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-20 pt-8 md:pt-12">
       <nav className="flex items-center justify-between border-b border-zinc-200 pb-5 dark:border-zinc-800">
@@ -32,7 +33,7 @@ export default async function HomePage() {
           <span>✓ 直接產生替代條款</span>
         </div>
       </header>
-      <ReviewApp initialQuotaUsed={quotaUsed} />
+      <ReviewApp initialQuotaUsed={quotaUsed} initialPaid={paid} />
     </main>
   );
 }

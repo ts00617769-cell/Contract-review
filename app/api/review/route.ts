@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { extractPdfText } from "@/lib/extract-pdf";
 import { extractWordText } from "@/lib/extract-word";
-import { freeReviewCookieHeader, hasUsedFreeReview } from "@/lib/quota";
+import { freeReviewCookieHeader, hasPaidAccess, hasUsedFreeReview } from "@/lib/quota";
 import { runContractReview } from "@/lib/run-review";
 import {
   SAMPLE_CONTRACT_NAME,
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   const textInput = typeof pastedText === "string" ? pastedText.trim() : "";
   const hasPastedText = textInput.length > 0;
 
-  if (!isSample && (await hasUsedFreeReview())) {
+  if (!isSample && (await hasUsedFreeReview()) && !(await hasPaidAccess())) {
     return NextResponse.json(
       {
         code: "quota_exceeded",
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
   });
 
   const response = NextResponse.json(result);
-  if (!isSample) {
+  if (!isSample && !(await hasPaidAccess())) {
     response.headers.append("Set-Cookie", freeReviewCookieHeader());
   }
   return response;

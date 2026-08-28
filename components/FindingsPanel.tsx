@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { EmailDraftModal } from "@/components/EmailDraftModal";
+import { buildEmail } from "@/lib/email-draft";
 import type { Finding, ReviewResult, Severity } from "@/lib/types";
 
 const RISK_STYLE: Record<
@@ -31,19 +32,40 @@ function count(result: ReviewResult, severity: Severity): number {
   return result.findings.filter((item) => item.severity === severity).length;
 }
 
-export function FindingsPanel({ result }: { result: ReviewResult }) {
+export function FindingsPanel({
+  result,
+  paid = false,
+}: {
+  result: ReviewResult;
+  paid?: boolean;
+}) {
   const [emailOpen, setEmailOpen] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const locked = !paid && !result.isSample;
 
   function openEmail(findingId?: string) {
+    if (locked) return;
     setFocusId(findingId ?? null);
     setEmailOpen(true);
   }
 
   async function copyClause(item: Finding) {
+    if (locked) return;
     await navigator.clipboard.writeText(item.suggestedClause);
     setCopiedId(item.id);
+  }
+
+  function downloadEmail() {
+    if (locked) return;
+    const draft = buildEmail(result.findings);
+    const blob = new Blob([draft], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${result.fileName.replace(/\.[^.]+$/, "")}-修約信.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -76,6 +98,7 @@ export function FindingsPanel({ result }: { result: ReviewResult }) {
         <p className="mt-3 text-xs text-zinc-400">
           {result.engine === "openai" ? "AI 深度拆解" : "台灣接案規則庫"}
           {result.usedFallback ? " · 備援模式" : ""}
+          {locked ? " · 完整對策已鎖定" : ""}
         </p>
       </header>
 
@@ -93,28 +116,26 @@ export function FindingsPanel({ result }: { result: ReviewResult }) {
               key={item.id}
               className={`rounded-2xl border border-l-4 border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 ${style.edge}`}
             >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex min-w-0 items-start gap-3">
-                  <span className="mt-0.5 font-mono text-xs text-zinc-400">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className={`rounded-md border px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${style.badge}`}
-                      >
-                        {style.label}
+              <div className="flex min-w-0 items-start gap-3">
+                <span className="mt-0.5 font-mono text-xs text-zinc-400">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`rounded-md border px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${style.badge}`}
+                    >
+                      {style.label}
+                    </span>
+                    {item.ruleId ? (
+                      <span className="font-mono text-[11px] text-zinc-400">
+                        {item.ruleId}
                       </span>
-                      {item.ruleId ? (
-                        <span className="font-mono text-[11px] text-zinc-400">
-                          {item.ruleId}
-                        </span>
-                      ) : null}
-                    </div>
-                    <h3 className="mt-2 text-base font-semibold text-zinc-950 dark:text-white">
-                      {item.title}
-                    </h3>
+                    ) : null}
                   </div>
+                  <h3 className="mt-2 text-base font-semibold text-zinc-950 dark:text-white">
+                    {item.title}
+                  </h3>
                 </div>
               </div>
 
@@ -122,7 +143,9 @@ export function FindingsPanel({ result }: { result: ReviewResult }) {
                 {item.verdict}
               </p>
 
-              <div className="mt-5 space-y-5">
+              <div
+                className={`mt-5 space-y-5 ${locked ? "pointer-events-none select-none blur-[6px]" : ""}`}
+              >
                 <section>
                   <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400">
                     原條款
@@ -131,7 +154,6 @@ export function FindingsPanel({ result }: { result: ReviewResult }) {
                     {item.quote}
                   </blockquote>
                 </section>
-
                 <section>
                   <p className="text-[11px] font-bold uppercase tracking-widest text-red-500">
                     踩雷原因
@@ -140,7 +162,6 @@ export function FindingsPanel({ result }: { result: ReviewResult }) {
                     {item.riskDetail}
                   </p>
                 </section>
-
                 <section>
                   <p className="text-[11px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
                     老鳥怎麼開口
@@ -149,7 +170,6 @@ export function FindingsPanel({ result }: { result: ReviewResult }) {
                     {item.counterMeasure}
                   </p>
                 </section>
-
                 <section>
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
@@ -157,8 +177,9 @@ export function FindingsPanel({ result }: { result: ReviewResult }) {
                     </p>
                     <button
                       type="button"
+                      disabled={locked}
                       onClick={() => void copyClause(item)}
-                      className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-800 transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
+                      className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-800 transition hover:bg-zinc-100 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
                     >
                       {copiedId === item.id ? "已複製" : "一鍵複製新條款"}
                     </button>
@@ -170,40 +191,56 @@ export function FindingsPanel({ result }: { result: ReviewResult }) {
               </div>
 
               <div className="mt-5 border-t border-zinc-100 pt-4 text-right dark:border-zinc-900">
-                <button
-                  type="button"
-                  onClick={() => openEmail(item.id)}
-                  className="text-xs font-semibold text-zinc-600 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
-                >
-                  把這些重點整理成修約信
-                </button>
+                {locked ? (
+                  <p className="text-xs font-medium text-zinc-400">
+                    解鎖後可複製條款與下載修約信
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => openEmail(item.id)}
+                    className="text-xs font-semibold text-zinc-600 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
+                  >
+                    把這些重點整理成修約信
+                  </button>
+                )}
               </div>
             </li>
           );
         })}
       </ol>
 
-      {result.findings.length > 0 ? (
+      {result.findings.length > 0 && !locked ? (
         <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6 text-white dark:border-zinc-700">
           <p className="text-lg font-semibold">不想自己組句子？</p>
           <p className="mt-2 text-sm leading-6 text-zinc-400">
             把所有紅黃項目整理成一封有立場、但不會撕破臉的修約信。
           </p>
-          <button
-            type="button"
-            onClick={() => openEmail()}
-            className="mt-4 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-zinc-200"
-          >
-            生成修約信
-          </button>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => openEmail()}
+              className="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-zinc-200"
+            >
+              生成修約信
+            </button>
+            <button
+              type="button"
+              onClick={downloadEmail}
+              className="rounded-lg border border-white/20 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              下載修約信
+            </button>
+          </div>
         </section>
       ) : null}
 
-      {emailOpen ? (
+      {emailOpen && !locked ? (
         <EmailDraftModal
           open
           findings={result.findings}
           focusId={focusId}
+          allowDownload
           onClose={() => setEmailOpen(false)}
         />
       ) : null}

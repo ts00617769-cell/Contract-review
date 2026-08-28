@@ -9,7 +9,13 @@ import type { ReviewResult } from "@/lib/types";
 
 type InputMode = "file" | "text";
 
-export function ReviewApp({ initialQuotaUsed }: { initialQuotaUsed: boolean }) {
+export function ReviewApp({
+  initialQuotaUsed,
+  initialPaid,
+}: {
+  initialQuotaUsed: boolean;
+  initialPaid: boolean;
+}) {
   const [mode, setMode] = useState<InputMode>("file");
   const [file, setFile] = useState<File | null>(null);
   const [contractText, setContractText] = useState("");
@@ -18,11 +24,15 @@ export function ReviewApp({ initialQuotaUsed }: { initialQuotaUsed: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ReviewResult | null>(null);
   const [quotaUsed, setQuotaUsed] = useState(initialQuotaUsed);
+  const [paid, setPaid] = useState(initialPaid);
 
   useEffect(() => {
     fetch("/api/quota")
       .then((response) => response.json())
-      .then((data: { used?: boolean }) => setQuotaUsed(Boolean(data.used)))
+      .then((data: { used?: boolean; paid?: boolean }) => {
+        setPaid(Boolean(data.paid));
+        setQuotaUsed(Boolean(data.used) && !data.paid);
+      })
       .catch(() => undefined);
   }, []);
 
@@ -41,7 +51,7 @@ export function ReviewApp({ initialQuotaUsed }: { initialQuotaUsed: boolean }) {
   }
 
   async function submitReview() {
-    if (quotaUsed) return;
+    if (quotaUsed && !paid) return;
     if (mode === "file" && !file) return;
     if (mode === "text" && contractText.replace(/\s/g, "").length < 80) {
       setError("文字太少。請貼上完整合約，至少 80 個字。");
@@ -64,7 +74,7 @@ export function ReviewApp({ initialQuotaUsed }: { initialQuotaUsed: boolean }) {
       if (!response.ok) throw new Error(data.error || "分析失敗，請再試一次。");
 
       setResult(data as ReviewResult);
-      setQuotaUsed(true);
+      if (!paid) setQuotaUsed(true);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "分析失敗，請再試一次。");
     } finally {
@@ -96,7 +106,7 @@ export function ReviewApp({ initialQuotaUsed }: { initialQuotaUsed: boolean }) {
   const isPdf = file?.name.toLowerCase().endsWith(".pdf") ?? false;
   const showWorkspace = Boolean(file || contractText);
   const canSubmit =
-    !quotaUsed &&
+    (paid || !quotaUsed) &&
     !loading &&
     (mode === "file" ? Boolean(file) : contractText.replace(/\s/g, "").length >= 80);
 
@@ -199,7 +209,7 @@ export function ReviewApp({ initialQuotaUsed }: { initialQuotaUsed: boolean }) {
               onClick={() => void submitReview()}
               className="rounded-lg bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-35 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
             >
-              {loading ? "正在拆合約…" : quotaUsed ? "本月免費額度已用完" : "開始抓雷"}
+              {loading ? "正在拆合約…" : quotaUsed && !paid ? "本月免費額度已用完" : "開始抓雷"}
             </button>
             <button
               type="button"
@@ -218,7 +228,14 @@ export function ReviewApp({ initialQuotaUsed }: { initialQuotaUsed: boolean }) {
         </div>
       </section>
 
-      {quotaUsed && !result ? <UpgradeGate /> : null}
+      {quotaUsed && !paid ? (
+        <UpgradeGate
+          onUnlocked={() => {
+            setPaid(true);
+            setQuotaUsed(false);
+          }}
+        />
+      ) : null}
 
       {showWorkspace ? (
         <section className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
@@ -249,7 +266,7 @@ export function ReviewApp({ initialQuotaUsed }: { initialQuotaUsed: boolean }) {
           </div>
           <div>
             {result ? (
-              <FindingsPanel result={result} />
+              <FindingsPanel result={result} paid={paid || Boolean(result.isSample)} />
             ) : (
               <div className="grid min-h-[320px] place-items-center rounded-2xl border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-500 dark:border-zinc-700">
                 {loading ? "正在拆條款，馬上好。" : "分析結果會出現在這裡。"}
