@@ -33,3 +33,7 @@ npm run dev
 | --- | --- |
 | `OPENAI_API_KEY` | 選填。未設定則只用規則庫 |
 | `OPENAI_MODEL` | 預設 `gpt-4o-mini` |
+| `NEXT_PUBLIC_PADDLE_ENV` | 必填：`production` 或 `sandbox`。未設定會直接失敗 |
+| `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` | Paddle Client-side Token（live_ / test_） |
+| `PADDLE_API_KEY` | 伺服器確認付款用，不可加 `NEXT_PUBLIC_` |
+| `NEXT_PUBLIC_PADDLE_PRICE_*` | Starter / Pro / Advanced 的月繳、年繳 `pri_` ID |

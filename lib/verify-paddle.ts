@@ -1,3 +1,6 @@
+import { paddleEnvironment } from "@/lib/paddle";
+import { allConfiguredPriceIds } from "@/lib/pricing-tiers";
+
 const PAID_STATUSES = new Set(["completed", "paid", "billed"]);
 
 type TransactionPayload = {
@@ -14,9 +17,7 @@ export async function verifyPaidTransaction(transactionId: string): Promise<bool
   if (!apiKey) return false;
 
   const host =
-    process.env.NEXT_PUBLIC_PADDLE_ENV === "sandbox"
-      ? "sandbox-api.paddle.com"
-      : "api.paddle.com";
+    paddleEnvironment() === "sandbox" ? "sandbox-api.paddle.com" : "api.paddle.com";
 
   const response = await fetch(`https://${host}/transactions/${transactionId}`, {
     headers: {
@@ -32,10 +33,9 @@ export async function verifyPaidTransaction(transactionId: string): Promise<bool
   const status = payload.data?.status;
   if (!status || !PAID_STATUSES.has(status)) return false;
 
-  const expectedPrice =
-    process.env.NEXT_PUBLIC_PADDLE_PRICE_ID?.trim() ||
-    "pri_01m132przkafxjxvmvy5kjrdg3";
+  const allowed = new Set(allConfiguredPriceIds());
   const items = payload.data?.items ?? [];
   if (items.length === 0) return true;
-  return items.some((item) => item.price?.id === expectedPrice);
+  if (allowed.size === 0) return true;
+  return items.some((item) => item.price?.id && allowed.has(item.price.id));
 }

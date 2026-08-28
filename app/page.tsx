@@ -1,4 +1,5 @@
 import { ReviewApp } from "@/components/ReviewApp";
+import { SiteHeader } from "@/components/SiteHeader";
 import { hasPaidAccess, hasUsedFreeReview } from "@/lib/quota";
 
 export default async function HomePage() {
@@ -6,15 +7,7 @@ export default async function HomePage() {
   const quotaUsed = paid ? false : await hasUsedFreeReview();
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-20 pt-8 md:pt-12">
-      <nav className="flex items-center justify-between border-b border-zinc-200 pb-5 dark:border-zinc-800">
-        <div className="flex items-center gap-2.5">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-zinc-950 text-xs font-bold text-white dark:bg-white dark:text-zinc-950">
-            契
-          </span>
-          <span className="text-sm font-semibold tracking-tight">契約哨兵</span>
-        </div>
-        <p className="text-xs text-zinc-500">給台灣接案者的合約檢查工具</p>
-      </nav>
+      <SiteHeader />
 
       <header className="mb-14 pt-20 text-center md:pt-28">
         <p className="mx-auto inline-flex rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">

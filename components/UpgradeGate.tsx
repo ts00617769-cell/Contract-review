@@ -1,28 +1,34 @@
 "use client";
 
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
-import { useEffect, useRef, useState } from "react";
-import { PADDLE_PRICE_ID, paddleEnvironment } from "@/lib/paddle";
-
-const CLIENT_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN?.trim() ?? "";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { readPaddleBrowserConfig } from "@/lib/paddle";
+import { PRICING_TIERS } from "@/lib/pricing-tiers";
 
 type UpgradeGateProps = {
   onUnlocked?: () => void;
 };
 
+const PRO_MONTHLY =
+  PRICING_TIERS.find((tier) => tier.name === "Pro")?.priceId.month ?? "";
+
 export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
+  const router = useRouter();
   const paddleRef = useRef<Paddle | null>(null);
   const onUnlockedRef = useRef(onUnlocked);
   const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const config = useMemo(() => readPaddleBrowserConfig(), []);
 
   useEffect(() => {
     onUnlockedRef.current = onUnlocked;
   }, [onUnlocked]);
 
   useEffect(() => {
-    if (!CLIENT_TOKEN) return;
+    if (!config.ok) return;
     let cancelled = false;
 
     async function confirmPayment(transactionId: string) {
@@ -39,6 +45,7 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
           throw new Error(data.error || "付款已收到，但解鎖失敗。請重新整理後再試。");
         }
         onUnlockedRef.current?.();
+        router.push(`/welcome?_ptxn=${encodeURIComponent(transactionId)}`);
       } catch (caught) {
         setError(caught instanceof Error ? caught.message : "解鎖失敗。");
       } finally {
@@ -47,8 +54,8 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
     }
 
     void initializePaddle({
-      token: CLIENT_TOKEN,
-      environment: paddleEnvironment(),
+      token: config.token,
+      environment: config.environment,
       eventCallback: (event) => {
         if (event.name !== "checkout.completed") return;
         const transactionId = event.data?.transaction_id;
@@ -65,14 +72,12 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [config, router]);
 
   function openCheckout() {
     setError(null);
-    if (!CLIENT_TOKEN) {
-      setError(
-        "尚未設定 NEXT_PUBLIC_PADDLE_CLIENT_TOKEN。請到 Vercel 環境變數貼上 Paddle Client-side Token。",
-      );
+    if (!config.ok) {
+      setError(config.error);
       return;
     }
     const paddle = paddleRef.current;
@@ -80,8 +85,17 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
       setError("結帳元件還在載入，請稍候再點一次。");
       return;
     }
+    if (!PRO_MONTHLY) {
+      setError("尚未設定 Pro 月繳 Price ID。");
+      return;
+    }
     paddle.Checkout.open({
-      items: [{ priceId: PADDLE_PRICE_ID, quantity: 1 }],
+      items: [{ priceId: PRO_MONTHLY, quantity: 1 }],
+      settings: {
+        displayMode: "overlay",
+        variant: "one-page",
+        successUrl: `${window.location.origin}/welcome`,
+      },
     });
   }
 
@@ -117,13 +131,13 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
         </article>
         <article className="rounded-xl border border-zinc-950 bg-zinc-950 p-5 text-white dark:border-zinc-700">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold">專業版</p>
+            <p className="text-sm font-semibold">Pro</p>
             <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-bold uppercase tracking-widest">
               Paddle
             </span>
           </div>
-          <p className="mt-3 text-3xl font-semibold">
-            $19 <span className="text-sm font-normal text-zinc-400">/ 月</span>
+          <p className="mt-3 text-sm leading-6 text-zinc-300">
+            價格依所在國家顯示。完整 Starter / Pro / Advanced 與年繳請看方案頁。
           </p>
           <ul className="mt-5 space-y-2 text-sm text-zinc-300">
             <li>完整風險報告</li>
@@ -133,23 +147,33 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
         </article>
       </div>
 
-      <div className="mt-6 flex justify-center">
+      <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
         <button
           type="button"
-          disabled={loading || (Boolean(CLIENT_TOKEN) && !ready)}
+          disabled={loading || (config.ok && !ready)}
           onClick={openCheckout}
           className="rounded-lg bg-zinc-950 px-5 py-3 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-40 dark:bg-white dark:text-zinc-950"
         >
           {loading
             ? "確認付款中…"
-            : ready || !CLIENT_TOKEN
+            : ready || !config.ok
               ? "用 Paddle 解鎖完整報告"
               : "載入結帳…"}
         </button>
+        <Link
+          href="/pricing"
+          className="rounded-lg border border-zinc-300 px-5 py-3 text-sm font-semibold text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-900"
+        >
+          查看三層方案
+        </Link>
       </div>
       {error ? (
         <p role="alert" className="mt-4 text-center text-sm text-red-600">
           {error}
+        </p>
+      ) : !config.ok ? (
+        <p role="alert" className="mt-4 text-center text-sm text-red-600">
+          {config.error}
         </p>
       ) : null}
     </section>

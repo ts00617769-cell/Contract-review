@@ -14,7 +14,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "缺少交易編號。" }, { status: 400 });
   }
 
-  const ok = await verifyPaidTransaction(body.transactionId.trim());
+  let ok = false;
+  try {
+    ok = await verifyPaidTransaction(body.transactionId.trim());
+  } catch (caught) {
+    const message =
+      caught instanceof Error ? caught.message : "Paddle 環境變數不完整。";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
   if (!ok) {
     return NextResponse.json(
       { error: "付款尚未確認。請確認已在 Vercel 設定 PADDLE_API_KEY。" },
