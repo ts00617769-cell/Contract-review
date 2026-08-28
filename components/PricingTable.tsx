@@ -163,7 +163,7 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
         </div>
       </div>
       <p className="mt-3 text-center text-xs text-zinc-400">
-        月繳／年繳只影響專業版。入門版免費，單次解鎖為一次付清。
+        月繳／年繳只影響專業版。單次解鎖不續訂，有效期間約 31 天。
       </p>
 
       <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -252,7 +252,7 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
                       : "bg-zinc-950 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950"
                   }`}
                 >
-                  {isOneTimeTier(tier) ? "單次解鎖" : "Subscribe"}
+                  {isOneTimeTier(tier) ? "立即解鎖" : "訂閱專業版"}
                 </button>
               )}
             </article>

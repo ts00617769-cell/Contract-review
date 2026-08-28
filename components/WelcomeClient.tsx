@@ -40,14 +40,14 @@ export function WelcomeClient({
 
   return (
     <div className="mx-auto mt-24 max-w-lg text-center">
-      <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">Welcome</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight">方案已就緒</h1>
+      <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">付款完成</p>
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight">解鎖已生效</h1>
       <p className="mt-4 text-sm leading-7 text-zinc-500">
         {status === "unlocking"
           ? "正在確認付款並解鎖完整報告…"
           : status === "ok"
-            ? "這台裝置本月可以不限份數拆合約。回到首頁上傳或貼上合約即可。"
-            : "若你剛完成付款，解鎖會在確認後生效。也可以直接回首頁繼續用免費額度。"}
+            ? "這台瀏覽器在有效期間內可不限份數查看完整報告。單次與月繳約 31 天，年繳約一年。換裝置或清除 Cookie 後可能需要重新解鎖。"
+            : "若你剛完成付款，解鎖會在確認後生效。也可以回首頁繼續使用免費額度。"}
       </p>
       {error ? (
         <p role="alert" className="mt-4 text-sm text-red-600">

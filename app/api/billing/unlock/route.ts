@@ -14,22 +14,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "缺少交易編號。" }, { status: 400 });
   }
 
-  let ok = false;
+  let verified: Awaited<ReturnType<typeof verifyPaidTransaction>>;
   try {
-    ok = await verifyPaidTransaction(body.transactionId.trim());
+    verified = await verifyPaidTransaction(body.transactionId.trim());
   } catch (caught) {
     const message =
       caught instanceof Error ? caught.message : "Paddle 環境變數不完整。";
     return NextResponse.json({ error: message }, { status: 500 });
   }
-  if (!ok) {
+  if (!verified.ok) {
     return NextResponse.json(
       { error: "付款尚未確認。請確認已在 Vercel 設定 PADDLE_API_KEY。" },
       { status: 402 },
     );
   }
 
-  const response = NextResponse.json({ paid: true });
-  response.headers.append("Set-Cookie", paidAccessCookieHeader());
+  const response = NextResponse.json({ paid: true, plan: verified.plan });
+  response.headers.append("Set-Cookie", paidAccessCookieHeader(verified.plan));
   return response;
 }

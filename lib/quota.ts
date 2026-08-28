@@ -32,7 +32,14 @@ export function quotaPeriod(): string {
   return currentPeriod();
 }
 
-export function paidAccessCookieHeader(): string {
-  const maxAge = 60 * 60 * 24 * 31;
+export type PaidPlan = "onetime" | "month" | "year";
+
+export function paidAccessDays(plan: PaidPlan): number {
+  if (plan === "year") return 366;
+  return 31;
+}
+
+export function paidAccessCookieHeader(plan: PaidPlan = "onetime"): string {
+  const maxAge = 60 * 60 * 24 * paidAccessDays(plan);
   return `${PAID_ACCESS_COOKIE}=1; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=Lax`;
 }

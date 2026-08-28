@@ -120,7 +120,7 @@ export function ReviewApp({
             className="grid w-full grid-cols-2 rounded-lg bg-zinc-100 p-1 text-sm sm:inline-grid sm:w-auto dark:bg-zinc-900"
           >
             {[
-              ["file", "上傳 PDF"],
+              ["file", "上傳檔案"],
               ["text", "文字貼上"],
             ].map(([value, label]) => (
               <button

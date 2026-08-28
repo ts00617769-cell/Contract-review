@@ -1,5 +1,6 @@
 import { paddleEnvironment } from "@/lib/paddle";
-import { allConfiguredPriceIds } from "@/lib/pricing-tiers";
+import { allConfiguredPriceIds, planFromPriceId } from "@/lib/pricing-tiers";
+import type { PaidPlan } from "@/lib/quota";
 
 const PAID_STATUSES = new Set(["completed", "paid", "billed"]);
 
@@ -10,11 +11,13 @@ type TransactionPayload = {
   };
 };
 
-export async function verifyPaidTransaction(transactionId: string): Promise<boolean> {
-  if (!/^txn_[a-z0-9]+$/i.test(transactionId)) return false;
+export async function verifyPaidTransaction(
+  transactionId: string,
+): Promise<{ ok: false } | { ok: true; plan: PaidPlan }> {
+  if (!/^txn_[a-z0-9]+$/i.test(transactionId)) return { ok: false };
 
   const apiKey = process.env.PADDLE_API_KEY?.trim();
-  if (!apiKey) return false;
+  if (!apiKey) return { ok: false };
 
   const host =
     paddleEnvironment() === "sandbox" ? "sandbox-api.paddle.com" : "api.paddle.com";
@@ -27,15 +30,20 @@ export async function verifyPaidTransaction(transactionId: string): Promise<bool
     cache: "no-store",
   });
 
-  if (!response.ok) return false;
+  if (!response.ok) return { ok: false };
 
   const payload = (await response.json()) as TransactionPayload;
   const status = payload.data?.status;
-  if (!status || !PAID_STATUSES.has(status)) return false;
+  if (!status || !PAID_STATUSES.has(status)) return { ok: false };
 
   const allowed = new Set(allConfiguredPriceIds());
   const items = payload.data?.items ?? [];
-  if (items.length === 0) return true;
-  if (allowed.size === 0) return true;
-  return items.some((item) => item.price?.id && allowed.has(item.price.id));
+  const matchedId = items
+    .map((item) => item.price?.id)
+    .find((id): id is string => Boolean(id && (allowed.size === 0 || allowed.has(id))));
+
+  if (items.length > 0 && allowed.size > 0 && !matchedId) return { ok: false };
+
+  const plan = planFromPriceId(matchedId) ?? "onetime";
+  return { ok: true, plan };
 }

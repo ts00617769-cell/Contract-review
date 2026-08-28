@@ -1,3 +1,5 @@
+import type { PaidPlan } from "@/lib/quota";
+
 export type BillingCycle = "month" | "year";
 export type PaidTierName = "專業版";
 export type TierName = "入門版" | "單次解鎖" | PaidTierName;
@@ -46,35 +48,35 @@ export const PRICING_TIERS: Tier[] = [
   {
     name: "入門版",
     free: true,
-    description: "先免費拆一份合約，確認工具適不適合你。",
+    description: "免費看結論。完整對策、替代條款與修約信需付費解鎖。",
     features: [
-      "每月 1 份合約標題與判決",
-      "踩雷範本完整免費",
-      "不儲存合約內容",
-      "完整對策需升級",
+      "每月 1 份分析，先看標題與判決",
+      "踩雷範本完整免費、不扣額度",
+      "分析當下處理，不以合約訓練模型",
+      "完整對策需單次解鎖或訂閱",
     ],
   },
   {
     name: "單次解鎖",
     oneTime: true,
     highlighted: true,
-    description: "只解鎖這次分析，適合偶爾才要拆合約。",
+    description: "一次付清、不自動續訂。同一裝置約 31 天可不限份數查看完整報告。",
     features: [
-      "這份合約的完整風險報告",
-      "修約信複製與下載",
-      "一次付清，不自動續訂",
-      "同一裝置本月可持續查看",
+      "完整風險報告、替代條款與修約信",
+      "一次付清，不會每月扣款",
+      "同一瀏覽器約 31 天有效",
+      "換裝置或清除 Cookie 後需重新解鎖",
     ],
     priceId: ONE_TIME_PRICE,
   },
   {
     name: "專業版",
-    description: "不限份數分析，接案旺季也不用算額度。",
+    description: "訂閱制。適合經常拆合約；年繳同一裝置約一年有效。",
     features: [
-      "不限份數完整風險報告",
-      "修約信複製與下載",
-      "替代條款可直接貼回合約",
-      "同一裝置本月持續解鎖",
+      "完整風險報告、替代條款與修約信",
+      "有效期間不限分析份數",
+      "月繳約 31 天；年繳約 366 天",
+      "到期是否續扣由 Paddle 訂閱管理",
     ],
     priceId: {
       month: envPrice("NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTH", "pri_01m13jzkdzx1pk3ycjtm2pc71x"),
@@ -103,6 +105,16 @@ export function checkoutPriceId(tier: Tier, cycle: BillingCycle): string {
   if (isFreeTier(tier)) return "";
   if (isOneTimeTier(tier)) return tier.priceId;
   return tier.priceId[cycle];
+}
+
+export function planFromPriceId(priceId: string | undefined): PaidPlan | null {
+  if (!priceId) return null;
+  const oneTime = oneTimePriceId();
+  const pro = PRICING_TIERS.find(isSubscriptionTier);
+  if (oneTime && priceId === oneTime) return "onetime";
+  if (pro && priceId === pro.priceId.year) return "year";
+  if (pro && priceId === pro.priceId.month) return "month";
+  return null;
 }
 
 export function allConfiguredPriceIds(): string[] {

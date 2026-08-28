@@ -17,7 +17,7 @@ export default async function PricingPage() {
           選一份適合你接案節奏的方案
         </h1>
         <p className="mt-4 text-sm leading-7 text-zinc-500 md:text-base">
-          入門版免費。單次解鎖一次付清。專業版可選月繳或年繳。
+          入門版免費看結論。單次解鎖一次付清，同一裝置約 31 天。專業版可訂閱月繳或年繳。
         </p>
       </header>
       <div className="mt-10">

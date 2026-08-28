@@ -114,7 +114,7 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
           解鎖這份合約的完整拆解與修約信
         </h2>
         <p className="mt-3 text-sm leading-7 text-zinc-500">
-          單次付款即可打開這份報告。需要不限份數時，再看專業版訂閱。
+          一次付清即可在這台裝置查看完整對策與修約信，約 31 天、不自動續訂。經常拆合約請改訂專業版。
         </p>
       </div>
 
@@ -123,25 +123,25 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
           <p className="text-sm font-semibold">入門版</p>
           <p className="mt-3 text-3xl font-semibold">$0</p>
           <ul className="mt-5 space-y-2 text-sm text-zinc-500">
-            <li>每月 1 份合約標題與判決</li>
+            <li>每月 1 份，先看標題與判決</li>
             <li>踩雷範本完整免費</li>
-            <li>完整對策需解鎖</li>
+            <li>完整對策需付費</li>
           </ul>
         </article>
         <article className="rounded-xl border border-zinc-950 bg-zinc-950 p-5 text-white dark:border-zinc-700">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold">單次解鎖</p>
             <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-bold uppercase tracking-widest">
-              $2.99
+              一次付清
             </span>
           </div>
           <p className="mt-3 text-sm leading-6 text-zinc-300">
-            一次付清，不自動續訂。訂閱方案請到方案頁。
+            不自動續訂。價格以結帳頁顯示為準。
           </p>
           <ul className="mt-5 space-y-2 text-sm text-zinc-300">
-            <li>這份合約的完整風險報告</li>
-            <li>修約信複製與下載</li>
-            <li>同一裝置本月可回看</li>
+            <li>完整風險報告與修約信</li>
+            <li>同一瀏覽器約 31 天有效</li>
+            <li>不限這段期間的分析份數</li>
           </ul>
         </article>
       </div>
@@ -156,7 +156,7 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
           {loading
             ? "確認付款中…"
             : ready || !config.ok
-              ? "單次解鎖這份報告"
+              ? "一次付清，解鎖這台裝置"
               : "載入結帳…"}
         </button>
         <Link
