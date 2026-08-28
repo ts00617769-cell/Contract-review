@@ -5,14 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { readPaddleBrowserConfig } from "@/lib/paddle";
-import { PRICING_TIERS } from "@/lib/pricing-tiers";
+import { PRICING_TIERS, isPaidTier } from "@/lib/pricing-tiers";
 
 type UpgradeGateProps = {
   onUnlocked?: () => void;
 };
 
-const PRO_MONTHLY =
-  PRICING_TIERS.find((tier) => tier.name === "Pro")?.priceId.month ?? "";
+const proTier = PRICING_TIERS.find((tier) => tier.name === "專業版");
+const PRO_MONTHLY = proTier && isPaidTier(proTier) ? proTier.priceId.month : "";
 
 export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
   const router = useRouter();
@@ -86,7 +86,7 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
       return;
     }
     if (!PRO_MONTHLY) {
-      setError("尚未設定 Pro 月繳 Price ID。");
+      setError("尚未設定專業版月繳 Price ID。");
       return;
     }
     paddle.Checkout.open({
@@ -121,7 +121,7 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
 
       <div className="mx-auto mt-8 grid max-w-3xl gap-4 md:grid-cols-2">
         <article className="rounded-xl border border-zinc-200 p-5 dark:border-zinc-800">
-          <p className="text-sm font-semibold">預覽</p>
+          <p className="text-sm font-semibold">入門版</p>
           <p className="mt-3 text-3xl font-semibold">$0</p>
           <ul className="mt-5 space-y-2 text-sm text-zinc-500">
             <li>每月 1 份合約標題與判決</li>
@@ -131,13 +131,13 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
         </article>
         <article className="rounded-xl border border-zinc-950 bg-zinc-950 p-5 text-white dark:border-zinc-700">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold">Pro</p>
+            <p className="text-sm font-semibold">專業版</p>
             <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-bold uppercase tracking-widest">
               Paddle
             </span>
           </div>
           <p className="mt-3 text-sm leading-6 text-zinc-300">
-            價格依所在國家顯示。完整 Starter / Pro / Advanced 與年繳請看方案頁。
+            價格依所在國家顯示。大師版與年繳請到方案頁。
           </p>
           <ul className="mt-5 space-y-2 text-sm text-zinc-300">
             <li>完整風險報告</li>
@@ -164,7 +164,7 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
           href="/pricing"
           className="rounded-lg border border-zinc-300 px-5 py-3 text-sm font-semibold text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-900"
         >
-          查看三層方案
+          查看專業版與大師版
         </Link>
       </div>
       {error ? (

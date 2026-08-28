@@ -1,10 +1,16 @@
 "use client";
 
 import { initializePaddle, type CountryCode, type Paddle } from "@paddle/paddle-js";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { readPaddleBrowserConfig } from "@/lib/paddle";
-import { PRICING_TIERS, type BillingCycle, type Tier } from "@/lib/pricing-tiers";
+import {
+  PRICING_TIERS,
+  isPaidTier,
+  type BillingCycle,
+  type PaidTier,
+} from "@/lib/pricing-tiers";
 
 type PriceMap = Record<string, string>;
 
@@ -26,6 +32,7 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
   const itemsForPreview = useMemo(() => {
     const ids = new Set<string>();
     for (const tier of PRICING_TIERS) {
+      if (!isPaidTier(tier)) continue;
       if (tier.priceId.month) ids.add(tier.priceId.month);
       if (tier.priceId.year) ids.add(tier.priceId.year);
     }
@@ -58,7 +65,7 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
 
       if (itemsForPreview.length === 0) {
         setLoadingPrices(false);
-        setError("尚未設定任何 Paddle Price ID。請到 lib/pricing-tiers.ts 或環境變數貼上 pri_ 編號。");
+        setError("尚未設定任何付費 Price ID。請到 Paddle Catalog 建立專業版／大師版價格。");
         return;
       }
 
@@ -95,7 +102,7 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
     };
   }, [config, countryCode, itemsForPreview, router]);
 
-  function openCheckout(tier: Tier) {
+  function openCheckout(tier: PaidTier) {
     setError(null);
     if (!config.ok) {
       setError(config.error);
@@ -148,10 +155,12 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
           ))}
         </div>
       </div>
+      <p className="mt-3 text-center text-xs text-zinc-400">月繳／年繳只影響專業版與大師版。入門版維持免費。</p>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-3">
         {PRICING_TIERS.map((tier) => {
-          const priceId = tier.priceId[cycle];
+          const paid = isPaidTier(tier);
+          const priceId = paid ? tier.priceId[cycle] : "";
           const amount = priceId ? prices[priceId] : undefined;
           return (
             <article
@@ -168,6 +177,10 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
                   <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-bold uppercase tracking-widest">
                     建議
                   </span>
+                ) : tier.free ? (
+                  <span className="rounded-md border border-zinc-200 px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:border-zinc-700">
+                    免費
+                  </span>
                 ) : null}
               </div>
               <p
@@ -178,7 +191,12 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
                 {tier.description}
               </p>
               <p className="mt-6 text-3xl font-semibold tracking-tight">
-                {loadingPrices ? (
+                {tier.free ? (
+                  <>
+                    $0
+                    <span className="ml-1 text-sm font-normal text-zinc-500">/ 月</span>
+                  </>
+                ) : loadingPrices ? (
                   <span className="text-base font-normal opacity-60">載入價格…</span>
                 ) : amount ? (
                   <>
@@ -204,18 +222,27 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
                   <li key={feature}>{feature}</li>
                 ))}
               </ul>
-              <button
-                type="button"
-                disabled={!ready || loadingPrices || !priceId}
-                onClick={() => openCheckout(tier)}
-                className={`mt-8 rounded-lg px-4 py-3 text-sm font-semibold disabled:opacity-40 ${
-                  tier.highlighted
-                    ? "bg-white text-zinc-950 hover:bg-zinc-200"
-                    : "bg-zinc-950 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950"
-                }`}
-              >
-                Subscribe
-              </button>
+              {tier.free ? (
+                <Link
+                  href="/"
+                  className="mt-8 rounded-lg border border-zinc-300 px-4 py-3 text-center text-sm font-semibold text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-900"
+                >
+                  免費開始使用
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  disabled={!ready || loadingPrices || !priceId}
+                  onClick={() => openCheckout(tier)}
+                  className={`mt-8 rounded-lg px-4 py-3 text-sm font-semibold disabled:opacity-40 ${
+                    tier.highlighted
+                      ? "bg-white text-zinc-950 hover:bg-zinc-200"
+                      : "bg-zinc-950 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950"
+                  }`}
+                >
+                  Subscribe
+                </button>
+              )}
             </article>
           );
         })}

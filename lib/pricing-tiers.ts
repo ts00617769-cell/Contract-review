@@ -1,40 +1,50 @@
 export type BillingCycle = "month" | "year";
+export type PaidTierName = "專業版" | "大師版";
+export type TierName = "入門版" | PaidTierName;
 
-export interface Tier {
-  name: "Starter" | "Pro" | "Advanced";
+export type FreeTier = {
+  name: "入門版";
   description: string;
   features: string[];
   highlighted?: boolean;
+  free: true;
+};
+
+export type PaidTier = {
+  name: PaidTierName;
+  description: string;
+  features: string[];
+  highlighted?: boolean;
+  free?: false;
   priceId: { month: string; year: string };
-}
+};
+
+export type Tier = FreeTier | PaidTier;
 
 function envPrice(name: string, fallback = ""): string {
   return process.env[name]?.trim() || fallback;
 }
 
 /**
- * Edit price IDs here or via env vars (Paddle Catalog → Prices → `pri_...`).
- * Empty IDs hide Subscribe for that interval until you paste a live price.
+ * Paid Price IDs come from Paddle Catalog (`pri_...`) or env vars.
+ * 入門版 is free and never goes through Paddle.
  */
 export const PRICING_TIERS: Tier[] = [
   {
-    name: "Starter",
-    description: "每月一份完整報告，適合剛開始接案、偶爾才要拆合約。",
+    name: "入門版",
+    free: true,
+    description: "先免費拆一份合約，確認工具適不適合你。",
     features: [
-      "每月 1 份完整風險報告",
-      "踩雷原因與談判開場白",
-      "替代條款與修約信複製",
-      "同一裝置當月可回看",
+      "每月 1 份合約標題與判決",
+      "踩雷範本完整免費",
+      "不儲存合約內容",
+      "完整對策需升級",
     ],
-    priceId: {
-      month: envPrice("NEXT_PUBLIC_PADDLE_PRICE_STARTER_MONTH"),
-      year: envPrice("NEXT_PUBLIC_PADDLE_PRICE_STARTER_YEAR"),
-    },
   },
   {
-    name: "Pro",
-    description: "不限份數分析，接案旺季也不用算額度。",
+    name: "專業版",
     highlighted: true,
+    description: "不限份數分析，接案旺季也不用算額度。",
     features: [
       "不限份數完整風險報告",
       "修約信複製與下載",
@@ -50,8 +60,8 @@ export const PRICING_TIERS: Tier[] = [
     },
   },
   {
-    name: "Advanced",
-    description: "給工作室或同時接多案的人，優先處理量大的合約。",
+    name: "大師版",
+    description: "給工作室或同時接多案的人，量大時優先支援。",
     features: [
       "不限份數完整風險報告",
       "修約信複製與下載",
@@ -59,15 +69,20 @@ export const PRICING_TIERS: Tier[] = [
       "後續帳號與歷史紀錄優先支援",
     ],
     priceId: {
-      month: envPrice("NEXT_PUBLIC_PADDLE_PRICE_ADVANCED_MONTH"),
-      year: envPrice("NEXT_PUBLIC_PADDLE_PRICE_ADVANCED_YEAR"),
+      month: envPrice("NEXT_PUBLIC_PADDLE_PRICE_MASTER_MONTH", envPrice("NEXT_PUBLIC_PADDLE_PRICE_ADVANCED_MONTH")),
+      year: envPrice("NEXT_PUBLIC_PADDLE_PRICE_MASTER_YEAR", envPrice("NEXT_PUBLIC_PADDLE_PRICE_ADVANCED_YEAR")),
     },
   },
 ];
 
+export function isPaidTier(tier: Tier): tier is PaidTier {
+  return !tier.free;
+}
+
 export function allConfiguredPriceIds(): string[] {
   const ids = new Set<string>();
   for (const tier of PRICING_TIERS) {
+    if (!isPaidTier(tier)) continue;
     if (tier.priceId.month) ids.add(tier.priceId.month);
     if (tier.priceId.year) ids.add(tier.priceId.year);
   }

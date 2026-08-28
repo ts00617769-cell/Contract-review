@@ -17,7 +17,7 @@ export default async function PricingPage() {
           選一份適合你接案節奏的方案
         </h1>
         <p className="mt-4 text-sm leading-7 text-zinc-500 md:text-base">
-          價格依所在國家顯示（含稅與否以 Paddle 回傳為準）。付款完成後導向歡迎頁，同一裝置本月解鎖完整報告。
+          入門版免費。專業版與大師版可選月繳或年繳，價格依所在國家顯示。付款完成後導向歡迎頁。
         </p>
       </header>
       <div className="mt-10">
