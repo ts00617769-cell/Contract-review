@@ -1,5 +1,5 @@
 export type BillingCycle = "month" | "year";
-export type PaidTierName = "專業版" | "大師版";
+export type PaidTierName = "專業版";
 export type TierName = "入門版" | "單次解鎖" | PaidTierName;
 
 export type FreeTier = {
@@ -40,7 +40,7 @@ const ONE_TIME_PRICE =
 
 /**
  * Paid Price IDs come from Paddle Catalog (`pri_...`) or env vars.
- * 入門版 is free. 單次解鎖 is a one-time Paddle price. 專業版／大師版 are subscriptions.
+ * 入門版 is free. 單次解鎖 is a one-time Paddle price. 專業版 is the subscription.
  */
 export const PRICING_TIERS: Tier[] = [
   {
@@ -77,22 +77,8 @@ export const PRICING_TIERS: Tier[] = [
       "同一裝置本月持續解鎖",
     ],
     priceId: {
-      month: envPrice("NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTH"),
-      year: envPrice("NEXT_PUBLIC_PADDLE_PRICE_PRO_YEAR"),
-    },
-  },
-  {
-    name: "大師版",
-    description: "給工作室或同時接多案的人，量大時優先支援。",
-    features: [
-      "不限份數完整風險報告",
-      "修約信複製與下載",
-      "適合多人共用同一裝置流程",
-      "後續帳號與歷史紀錄優先支援",
-    ],
-    priceId: {
-      month: envPrice("NEXT_PUBLIC_PADDLE_PRICE_MASTER_MONTH", envPrice("NEXT_PUBLIC_PADDLE_PRICE_ADVANCED_MONTH")),
-      year: envPrice("NEXT_PUBLIC_PADDLE_PRICE_MASTER_YEAR", envPrice("NEXT_PUBLIC_PADDLE_PRICE_ADVANCED_YEAR")),
+      month: envPrice("NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTH", "pri_01m13jzkdzx1pk3ycjtm2pc71x"),
+      year: envPrice("NEXT_PUBLIC_PADDLE_PRICE_PRO_YEAR", "pri_01m13kbvkdypa63eprk8p8w97j"),
     },
   },
 ];

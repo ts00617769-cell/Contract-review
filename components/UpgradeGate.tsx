@@ -114,7 +114,7 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
           解鎖這份合約的完整拆解與修約信
         </h2>
         <p className="mt-3 text-sm leading-7 text-zinc-500">
-          單次付款即可打開這份報告。需要不限份數時，再看專業版或大師版訂閱。
+          單次付款即可打開這份報告。需要不限份數時，再看專業版訂閱。
         </p>
       </div>
 

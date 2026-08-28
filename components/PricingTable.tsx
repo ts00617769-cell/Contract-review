@@ -163,10 +163,10 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
         </div>
       </div>
       <p className="mt-3 text-center text-xs text-zinc-400">
-        月繳／年繳只影響專業版與大師版。入門版免費，單次解鎖為一次付清。
+        月繳／年繳只影響專業版。入門版免費，單次解鎖為一次付清。
       </p>
 
-      <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-8 grid gap-4 md:grid-cols-3">
         {PRICING_TIERS.map((tier) => {
           const priceId = checkoutPriceId(tier, cycle);
           const amount = priceId ? prices[priceId] : undefined;
