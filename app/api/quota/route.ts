@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { paddleConfigured } from "@/lib/paddle";
-import { hasPaidAccess, hasUsedFreeReview, quotaPeriod } from "@/lib/quota";
+import { hasUsedFreeReview, paidAccessPlan, quotaPeriod } from "@/lib/quota";
 
 export async function GET() {
-  const paid = await hasPaidAccess();
+  const paidPlan = await paidAccessPlan();
+  const paid = paidPlan !== null;
   const used = paid ? false : await hasUsedFreeReview();
   return NextResponse.json({
     used,
@@ -11,7 +12,7 @@ export async function GET() {
     remaining: paid || !used ? 1 : 0,
     limit: paid ? null : 1,
     period: quotaPeriod(),
-    plan: paid ? "pro" : "free",
+    plan: paidPlan ?? "free",
     paddle: { configured: paddleConfigured() },
   });
 }

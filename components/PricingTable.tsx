@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { readPaddleBrowserConfig } from "@/lib/paddle";
 import {
   PRICING_TIERS,
+  SUBSCRIPTIONS_ENABLED,
   checkoutPriceId,
   isFreeTier,
   isOneTimeTier,
@@ -54,13 +55,7 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
         if (event.name !== "checkout.completed") return;
         const transactionId = event.data?.transaction_id;
         if (typeof transactionId !== "string") return;
-        void fetch("/api/billing/unlock", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ transactionId }),
-        }).finally(() => {
-          router.push(`/welcome?_ptxn=${encodeURIComponent(transactionId)}`);
-        });
+        router.push(`/welcome?_ptxn=${encodeURIComponent(transactionId)}`);
       },
     }).then(async (instance) => {
       if (cancelled || !instance) return;
@@ -139,34 +134,51 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
 
   return (
     <div>
-      <div className="flex justify-center">
-        <div className="inline-flex rounded-lg bg-zinc-100 p-1 text-sm dark:bg-zinc-900">
-          {(
-            [
-              ["month", "月繳"],
-              ["year", "年繳"],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setCycle(value)}
-              className={`rounded-md px-4 py-2 font-medium transition ${
-                cycle === value
-                  ? "bg-white text-zinc-950 shadow-sm dark:bg-zinc-800 dark:text-white"
-                  : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400"
-              }`}
+      {SUBSCRIPTIONS_ENABLED ? (
+        <>
+          <div className="flex justify-center">
+            <div
+              role="group"
+              aria-label="專業版計費週期"
+              className="inline-flex rounded-lg bg-zinc-100 p-1 text-sm dark:bg-zinc-900"
             >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-      <p className="mt-3 text-center text-xs text-zinc-400">
-        月繳／年繳只影響專業版。單次解鎖不續訂，有效期間約 31 天。
-      </p>
+              {(
+                [
+                  ["month", "月繳"],
+                  ["year", "年繳"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={cycle === value}
+                  onClick={() => setCycle(value)}
+                  className={`rounded-md px-4 py-2 font-medium transition ${
+                    cycle === value
+                      ? "bg-white text-zinc-950 shadow-sm dark:bg-zinc-800 dark:text-white"
+                      : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="mt-3 text-center text-xs text-zinc-400">
+            月繳／年繳只影響專業版。31 天解鎖不續訂。
+          </p>
+        </>
+      ) : (
+        <p className="text-center text-xs text-zinc-400">
+          31 天解鎖為一次付清、不自動續訂。
+        </p>
+      )}
 
-      <div className="mt-8 grid gap-4 md:grid-cols-3">
+      <div
+        className={`mx-auto mt-8 grid max-w-4xl gap-4 ${
+          SUBSCRIPTIONS_ENABLED ? "md:grid-cols-3" : "md:grid-cols-2"
+        }`}
+      >
         {PRICING_TIERS.map((tier) => {
           const priceId = checkoutPriceId(tier, cycle);
           const amount = priceId ? prices[priceId] : undefined;

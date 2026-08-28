@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { EmailDraftModal } from "@/components/EmailDraftModal";
+import { DISCLAIMER_SHORT } from "@/lib/disclaimer";
 import { buildEmail } from "@/lib/email-draft";
 import type { Finding, ReviewResult, Severity } from "@/lib/types";
 
@@ -42,7 +43,7 @@ export function FindingsPanel({
   const [emailOpen, setEmailOpen] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const locked = !paid && !result.isSample;
+  const locked = result.access !== "full" || (!paid && !result.isSample);
 
   function openEmail(findingId?: string) {
     if (locked) return;
@@ -51,7 +52,7 @@ export function FindingsPanel({
   }
 
   async function copyClause(item: Finding) {
-    if (locked) return;
+    if (locked || !item.suggestedClause) return;
     await navigator.clipboard.writeText(item.suggestedClause);
     setCopiedId(item.id);
   }
@@ -100,6 +101,7 @@ export function FindingsPanel({
           {result.usedFallback ? " · 備援模式" : ""}
           {locked ? " · 完整對策已鎖定" : ""}
         </p>
+        <p className="mt-2 text-xs leading-5 text-zinc-400">{DISCLAIMER_SHORT}</p>
       </header>
 
       {result.findings.length === 0 ? (
@@ -158,7 +160,7 @@ export function FindingsPanel({
                     </p>
                   </div>
                   <blockquote className="mt-3 border-l-2 border-zinc-300 pl-4 text-sm leading-7 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
-                    {item.quote}
+                    {item.quote ?? "付費解鎖後顯示原條款定位與完整引用。"}
                   </blockquote>
                 </section>
                 <div className="relative h-7 border-y border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -176,7 +178,7 @@ export function FindingsPanel({
                     </p>
                   </div>
                   <p className="mt-3 text-sm leading-7 text-zinc-700 dark:text-zinc-300">
-                    {item.riskDetail}
+                    {item.riskDetail ?? "付費解鎖後顯示這條約定對工時、款項與權利的具體影響。"}
                   </p>
                 </section>
                 <div className="relative h-7 border-y border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -204,7 +206,7 @@ export function FindingsPanel({
                     </button>
                   </div>
                   <p className="mt-3 rounded-lg border border-emerald-200 bg-white p-4 text-sm leading-7 text-zinc-800 dark:border-emerald-950 dark:bg-zinc-950 dark:text-zinc-200">
-                    {item.suggestedClause}
+                    {item.suggestedClause ?? "付費解鎖後顯示可直接貼回合約的替代條文。"}
                   </p>
                 </section>
                 <section className="border-t border-zinc-200 p-5 dark:border-zinc-800 sm:p-6">
@@ -212,7 +214,7 @@ export function FindingsPanel({
                     談判時可以這樣說
                   </p>
                   <p className="mt-2 text-sm leading-7 text-zinc-700 dark:text-zinc-300">
-                    {item.counterMeasure}
+                    {item.counterMeasure ?? "付費解鎖後顯示可直接對客戶說的談判話術。"}
                   </p>
                 </section>
               </div>

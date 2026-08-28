@@ -1,12 +1,17 @@
+import type { Metadata } from "next";
 import { ReviewApp } from "@/components/ReviewApp";
 import { SiteHeader } from "@/components/SiteHeader";
 import { hasPaidAccess, hasUsedFreeReview } from "@/lib/quota";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export default async function HomePage() {
   const paid = await hasPaidAccess();
   const quotaUsed = paid ? false : await hasUsedFreeReview();
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 pb-20 pt-8 md:pt-12">
+    <main id="main-content" className="mx-auto w-full max-w-6xl px-4 pb-20 pt-8 md:pt-12">
       <SiteHeader />
 
       <header className="mx-auto mb-12 max-w-4xl pt-16 text-center md:mb-16 md:pt-24">
@@ -14,7 +19,7 @@ export default async function HomePage() {
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
           繁體中文 · 台灣接案情境 · 通常不到一分鐘
         </p>
-        <h1 className="mt-6 whitespace-nowrap text-[clamp(1.125rem,5.4vw,3.75rem)] font-semibold leading-[1.15] tracking-[-0.045em] text-zinc-950 dark:text-white">
+        <h1 className="mt-6 text-balance text-[clamp(2rem,5.4vw,3.75rem)] font-semibold leading-[1.15] tracking-[-0.045em] text-zinc-950 dark:text-white">
           別再簽「改到滿意為止」的合約了。
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-[15px] leading-7 text-zinc-600 dark:text-zinc-400 md:text-lg md:leading-8">

@@ -7,11 +7,11 @@ export type Finding = {
   category: FindingCategory;
   severity: Severity;
   title: string;
-  quote: string;
   verdict: string;
-  riskDetail: string;
-  counterMeasure: string;
-  suggestedClause: string;
+  quote?: string;
+  riskDetail?: string;
+  counterMeasure?: string;
+  suggestedClause?: string;
   ruleId?: string;
 };
 
@@ -23,6 +23,7 @@ export type ReviewResult = {
   fileName: string;
   usedFallback: boolean;
   isSample?: boolean;
+  access: "preview" | "full";
 };
 
 export type QuotaState = {

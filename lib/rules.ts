@@ -85,6 +85,7 @@ export const TAIWAN_FREELANCER_RULES: ContractRule[] = [
     severity: "high",
     title: "未約定付款期程或分期",
     absent: true,
+    contextPatterns: [/(?:契約|合約|委託|承攬)[\s\S]{0,80}(?:報酬|價金|費用|工作|服務)/],
     absencePatterns: [
       /付款期限/,
       /給付期限/,
@@ -105,6 +106,7 @@ export const TAIWAN_FREELANCER_RULES: ContractRule[] = [
     severity: "medium",
     title: "未約定訂金／預付款保障",
     absent: true,
+    contextPatterns: [/(?:報酬|價金|費用|付款|給付)/],
     absencePatterns: [
       /訂金/,
       /定金/,
@@ -135,6 +137,7 @@ export const TAIWAN_FREELANCER_RULES: ContractRule[] = [
     severity: "medium",
     title: "未約定逾期付款利息",
     absent: true,
+    contextPatterns: [/(?:付款|給付|尾款|報酬|價金)/],
     absencePatterns: [/遲延利息/, /逾期利息/, /遲延給付利息/, /法定利息/],
     why: "沒有逾期利息條款時，客戶拖款的成本接近零。",
     suggestion:
@@ -478,6 +481,7 @@ export const TAIWAN_FREELANCER_RULES: ContractRule[] = [
     severity: "medium",
     title: "未約定著作權／授權範圍",
     absent: true,
+    contextPatterns: [/(?:設計|文案|程式|軟體|作品|成果|交付|創作|素材)/],
     absencePatterns: [
       /著作財產權/,
       /著作權/,

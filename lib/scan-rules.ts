@@ -44,10 +44,12 @@ function toFinding(
 
 export function scanWithRuleLibrary(rawText: string): Finding[] {
   const text = rawText.replace(/\u0000/g, "");
+  const canInferMissingClauses = text.replace(/\s/g, "").length >= 300;
   const findings: Finding[] = [];
 
   for (const rule of TAIWAN_FREELANCER_RULES) {
     if (rule.absent) {
+      if (!canInferMissingClauses) continue;
       const patterns = rule.absencePatterns ?? [];
       const hit = patterns.some((pattern) => pattern.test(text));
       const contextPatterns = rule.contextPatterns ?? [];

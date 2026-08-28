@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { FindingsPanel } from "@/components/FindingsPanel";
 import { PdfPreview } from "@/components/PdfPreview";
@@ -8,6 +9,18 @@ import { SAMPLE_CONTRACT_NAME, SAMPLE_CONTRACT_TEXT } from "@/lib/sample-contrac
 import type { ReviewResult } from "@/lib/types";
 
 type InputMode = "file" | "text";
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+
+async function readJson<T>(response: Response): Promise<T> {
+  const text = await response.text();
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error(
+      response.ok ? "伺服器回應格式錯誤，請稍後再試。" : "伺服器暫時無法處理請求。",
+    );
+  }
+}
 
 export function ReviewApp({
   initialQuotaUsed,
@@ -38,6 +51,17 @@ export function ReviewApp({
 
   const onFile = useCallback((next: File | null) => {
     if (!next) return;
+    const lowerName = next.name.toLowerCase();
+    if (!lowerName.endsWith(".pdf") && !lowerName.endsWith(".docx")) {
+      setError("目前只支援 PDF 與 Word .docx 檔案。");
+      setFile(null);
+      return;
+    }
+    if (next.size > MAX_FILE_BYTES) {
+      setError("檔案請小於 10MB。");
+      setFile(null);
+      return;
+    }
     setFile(next);
     setContractText("");
     setResult(null);
@@ -50,8 +74,8 @@ export function ReviewApp({
     setError(null);
   }
 
-  async function submitReview() {
-    if (quotaUsed && !paid) return;
+  async function submitReview(ignoreClientQuota = false) {
+    if (!ignoreClientQuota && quotaUsed && !paid) return;
     if (mode === "file" && !file) return;
     if (mode === "text" && contractText.replace(/\s/g, "").length < 80) {
       setError("文字太少。請貼上完整合約，至少 80 個字。");
@@ -66,15 +90,21 @@ export function ReviewApp({
       if (mode === "text") body.set("text", contractText);
 
       const response = await fetch("/api/review", { method: "POST", body });
-      const data = await response.json();
+      const data = await readJson<ReviewResult & { error?: string }>(response);
       if (response.status === 402) {
         setQuotaUsed(true);
         return;
       }
       if (!response.ok) throw new Error(data.error || "分析失敗，請再試一次。");
 
-      setResult(data as ReviewResult);
-      if (!paid) setQuotaUsed(true);
+      const nextResult = data as ReviewResult;
+      setResult(nextResult);
+      if (nextResult.access === "full" && !nextResult.isSample) {
+        setPaid(true);
+        setQuotaUsed(false);
+      } else if (!paid) {
+        setQuotaUsed(true);
+      }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "分析失敗，請再試一次。");
     } finally {
@@ -93,7 +123,7 @@ export function ReviewApp({
       const body = new FormData();
       body.set("sample", "1");
       const response = await fetch("/api/review", { method: "POST", body });
-      const data = await response.json();
+      const data = await readJson<ReviewResult & { error?: string }>(response);
       if (!response.ok) throw new Error(data.error || "範本分析失敗，請再試一次。");
       setResult(data as ReviewResult);
     } catch (caught) {
@@ -125,9 +155,11 @@ export function ReviewApp({
             ].map(([value, label]) => (
               <button
                 key={value}
+                id={`${value}-tab`}
                 type="button"
                 role="tab"
                 aria-selected={mode === value}
+                aria-controls={`${value}-panel`}
                 onClick={() => switchMode(value as InputMode)}
                 className={`rounded-md px-4 py-2.5 font-medium transition ${
                   mode === value
@@ -148,6 +180,8 @@ export function ReviewApp({
           {mode === "file" ? (
             <label
               role="tabpanel"
+              id="file-panel"
+              aria-labelledby="file-tab"
               onDragOver={(event) => {
                 event.preventDefault();
                 setDragging(true);
@@ -186,8 +220,15 @@ export function ReviewApp({
               ) : null}
             </label>
           ) : (
-            <div role="tabpanel">
+            <div role="tabpanel" id="text-panel" aria-labelledby="text-tab">
+              <label
+                htmlFor="contract-text"
+                className="mb-2 block text-sm font-semibold text-zinc-800 dark:text-zinc-200"
+              >
+                合約全文
+              </label>
               <textarea
+                id="contract-text"
                 value={contractText}
                 onChange={(event) => {
                   setContractText(event.target.value);
@@ -207,8 +248,18 @@ export function ReviewApp({
             aria-label="隱私保障"
             className="mt-4 flex flex-col gap-2 border-y border-zinc-100 py-3 text-xs font-medium text-zinc-500 sm:flex-row sm:items-center sm:gap-0 sm:divide-x sm:divide-zinc-200 dark:border-zinc-900 dark:text-zinc-400 dark:sm:divide-zinc-800"
           >
-            <span className="sm:pr-4">🔒 不儲存任何合約內容</span>
-            <span className="sm:pl-4">🛡️ 不作為 AI 訓練資料</span>
+            <span className="sm:pr-4">
+              <span aria-hidden>🔒 </span>本站不建立可回查的合約資料庫
+            </span>
+            <span className="sm:pl-4">
+              <span aria-hidden>🛡️ </span>僅傳送給分析處理器，不主動用於訓練
+            </span>
+            <Link
+              href="/privacy"
+              className="underline decoration-zinc-300 underline-offset-4 sm:pl-4"
+            >
+              查看隱私權政策
+            </Link>
           </div>
 
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -242,6 +293,7 @@ export function ReviewApp({
           onUnlocked={() => {
             setPaid(true);
             setQuotaUsed(false);
+            void submitReview(true);
           }}
         />
       ) : null}

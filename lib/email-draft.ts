@@ -2,11 +2,16 @@ export function buildEmail(findings: {
   id: string;
   severity: "high" | "medium" | "low";
   title: string;
-  riskDetail: string;
-  suggestedClause: string;
+  riskDetail?: string;
+  suggestedClause?: string;
 }[], focusId?: string | null): string {
   const risks = findings
-    .filter((finding) => finding.severity === "high" || finding.severity === "medium")
+    .filter(
+      (finding) =>
+        (finding.severity === "high" || finding.severity === "medium") &&
+        finding.riskDetail &&
+        finding.suggestedClause,
+    )
     .sort((a, b) => {
       if (a.id === focusId) return -1;
       if (b.id === focusId) return 1;

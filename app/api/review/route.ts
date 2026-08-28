@@ -7,20 +7,45 @@ import {
   SAMPLE_CONTRACT_NAME,
   SAMPLE_CONTRACT_TEXT,
 } from "@/lib/sample-contract";
+import type { ReviewResult } from "@/lib/types";
 
 export const runtime = "nodejs";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_TEXT_CHARS = 24_000;
 
+function previewResult(result: ReviewResult): ReviewResult {
+  return {
+    ...result,
+    access: "preview",
+    findings: result.findings.map((finding) => ({
+      id: finding.id,
+      category: finding.category,
+      severity: finding.severity,
+      title: finding.title,
+      verdict: finding.verdict,
+      ...(finding.ruleId ? { ruleId: finding.ruleId } : {}),
+    })),
+  };
+}
+
 export async function POST(request: Request) {
-  const formData = await request.formData();
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    return NextResponse.json(
+      { error: "請使用 multipart/form-data 上傳檔案或合約文字。" },
+      { status: 415 },
+    );
+  }
   const isSample = formData.get("sample") === "1";
   const pastedText = formData.get("text");
   const textInput = typeof pastedText === "string" ? pastedText.trim() : "";
   const hasPastedText = textInput.length > 0;
 
-  if (!isSample && (await hasUsedFreeReview()) && !(await hasPaidAccess())) {
+  const paid = await hasPaidAccess();
+  if (!isSample && (await hasUsedFreeReview()) && !paid) {
     return NextResponse.json(
       {
         code: "quota_exceeded",
@@ -37,7 +62,7 @@ export async function POST(request: Request) {
   if (isSample) {
     text = SAMPLE_CONTRACT_TEXT;
   } else if (hasPastedText) {
-    text = textInput.slice(0, MAX_TEXT_CHARS);
+    text = textInput;
     fileName = "貼上的合約文字";
   } else {
     const file = formData.get("file");
@@ -94,15 +119,25 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await runContractReview({
+  if (text.length > MAX_TEXT_CHARS) {
+    return NextResponse.json(
+      {
+        error: `合約內容超過 ${MAX_TEXT_CHARS.toLocaleString()} 字，為避免只分析到前半段，請拆成數份後分別檢查。`,
+      },
+      { status: 400 },
+    );
+  }
+
+  const fullResult = await runContractReview({
     text,
     pageCount,
     fileName,
     preferRulesOnly: isSample,
   });
 
+  const result = isSample || paid ? fullResult : previewResult(fullResult);
   const response = NextResponse.json(result);
-  if (!isSample && !(await hasPaidAccess())) {
+  if (!isSample && !paid) {
     response.headers.append("Set-Cookie", freeReviewCookieHeader());
   }
   return response;

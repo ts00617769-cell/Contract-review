@@ -31,14 +31,32 @@ export type SubscriptionTier = {
 
 export type Tier = FreeTier | OneTimeTier | SubscriptionTier;
 
-function envPrice(name: string, fallback = ""): string {
-  return process.env[name]?.trim() || fallback;
+export const SUBSCRIPTIONS_ENABLED =
+  process.env.NEXT_PUBLIC_ENABLE_SUBSCRIPTIONS === "true";
+
+function envPrice(
+  name:
+    | "NEXT_PUBLIC_PADDLE_PRICE_ONETIME"
+    | "NEXT_PUBLIC_PADDLE_PRICE_ID"
+    | "NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTH"
+    | "NEXT_PUBLIC_PADDLE_PRICE_PRO_YEAR",
+  fallback = "",
+): string {
+  const values = {
+    NEXT_PUBLIC_PADDLE_PRICE_ONETIME:
+      process.env.NEXT_PUBLIC_PADDLE_PRICE_ONETIME,
+    NEXT_PUBLIC_PADDLE_PRICE_ID: process.env.NEXT_PUBLIC_PADDLE_PRICE_ID,
+    NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTH:
+      process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTH,
+    NEXT_PUBLIC_PADDLE_PRICE_PRO_YEAR:
+      process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO_YEAR,
+  };
+  return values[name]?.trim() || fallback;
 }
 
 const ONE_TIME_PRICE =
   envPrice("NEXT_PUBLIC_PADDLE_PRICE_ONETIME") ||
-  envPrice("NEXT_PUBLIC_PADDLE_PRICE_ID") ||
-  "pri_01m132przkafxjxvmvy5kjrdg3";
+  envPrice("NEXT_PUBLIC_PADDLE_PRICE_ID");
 
 /**
  * Paid Price IDs come from Paddle Catalog (`pri_...`) or env vars.
@@ -69,20 +87,28 @@ export const PRICING_TIERS: Tier[] = [
     ],
     priceId: ONE_TIME_PRICE,
   },
-  {
-    name: "專業版",
-    description: "訂閱制。適合經常拆合約；年繳同一裝置約一年有效。",
-    features: [
-      "完整風險報告、替代條款與修約信",
-      "有效期間不限分析份數",
-      "月繳約 31 天；年繳約 366 天",
-      "到期是否續扣由 Paddle 訂閱管理",
-    ],
-    priceId: {
-      month: envPrice("NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTH", "pri_01m13jzkdzx1pk3ycjtm2pc71x"),
-      year: envPrice("NEXT_PUBLIC_PADDLE_PRICE_PRO_YEAR", "pri_01m13kbvkdypa63eprk8p8w97j"),
-    },
-  },
+  ...(SUBSCRIPTIONS_ENABLED
+    ? [
+        {
+          name: "專業版" as const,
+          description: "訂閱制。適合經常拆合約；年繳同一裝置約一年有效。",
+          features: [
+            "完整風險報告、替代條款與修約信",
+            "有效期間不限分析份數",
+            "月繳約 31 天；年繳約 366 天",
+            "到期是否續扣由 Paddle 訂閱管理",
+          ],
+          priceId: {
+            month: envPrice(
+              "NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTH",
+            ),
+            year: envPrice(
+              "NEXT_PUBLIC_PADDLE_PRICE_PRO_YEAR",
+            ),
+          },
+        },
+      ]
+    : []),
 ];
 
 export function isFreeTier(tier: Tier): tier is FreeTier {

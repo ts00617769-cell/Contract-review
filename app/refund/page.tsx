@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import { LegalLayout } from "@/components/LegalLayout";
+import { SUBSCRIPTIONS_ENABLED } from "@/lib/pricing-tiers";
+import { SUPPORT_EMAIL } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "退款政策｜契約哨兵",
+  alternates: { canonical: "/refund" },
+};
 
 export default function RefundPage() {
   return (
@@ -21,17 +29,31 @@ export default function RefundPage() {
           <li>依法必須提供之猶豫期或強制退款權利（若適用於你的所在地）。</li>
         </ul>
       </section>
-      <section>
-        <h2 className="text-base font-semibold text-zinc-950 dark:text-white">3. 訂閱取消</h2>
-        <p className="mt-2">
-          專業版為訂閱。取消後，通常不會立刻退還已過期間，但應停止下一期自動扣款。請使用 Paddle 寄給你的管理連結或收據客服辦理。
-        </p>
-      </section>
+      {SUBSCRIPTIONS_ENABLED ? (
+        <section>
+          <h2 className="text-base font-semibold text-zinc-950 dark:text-white">3. 訂閱取消</h2>
+          <p className="mt-2">
+            專業版為訂閱。取消後，通常不會立刻退還已過期間，但應停止下一期自動扣款。請使用 Paddle 寄給你的管理連結或收據客服辦理。
+          </p>
+        </section>
+      ) : null}
       <section>
         <h2 className="text-base font-semibold text-zinc-950 dark:text-white">4. 如何申請</h2>
         <p className="mt-2">
           請保留交易編號與 Paddle 收據，於付款後 14
-          日內說明原因。核准之退款將依原付款方式退回，實際入帳時間依銀行與 Paddle 作業而定。
+          日內說明原因。
+          {SUPPORT_EMAIL ? (
+            <>
+              請寄至{" "}
+              <a className="underline" href={`mailto:${SUPPORT_EMAIL}`}>
+                {SUPPORT_EMAIL}
+              </a>
+              ；{" "}
+            </>
+          ) : (
+            "請先透過 Paddle 收據中的客服連結提出；"
+          )}
+          核准之退款將依原付款方式退回，實際入帳時間依銀行與 Paddle 作業而定。
         </p>
       </section>
     </LegalLayout>

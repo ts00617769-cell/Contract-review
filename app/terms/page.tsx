@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import { LegalLayout } from "@/components/LegalLayout";
+import { SUBSCRIPTIONS_ENABLED } from "@/lib/pricing-tiers";
+import { SUPPORT_EMAIL } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "服務條款｜契約哨兵",
+  alternates: { canonical: "/terms" },
+};
 
 export default function TermsPage() {
   return (
@@ -21,8 +29,12 @@ export default function TermsPage() {
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>入門版：每月可免費分析 1 份合約，僅顯示標題與判決；完整對策需付費。</li>
           <li>單次解鎖：一次付清、不自動續訂。付款後，同一裝置約 31 天可解鎖完整報告（不限份數）。</li>
-          <li>專業版月繳：訂閱，同一裝置約 31 天可解鎖完整報告；到期是否續扣由 Paddle 訂閱設定決定。</li>
-          <li>專業版年繳：訂閱，同一裝置約 366 天可解鎖完整報告。</li>
+          {SUBSCRIPTIONS_ENABLED ? (
+            <>
+              <li>專業版月繳：訂閱，同一裝置約 31 天可解鎖完整報告；到期是否續扣由 Paddle 訂閱設定決定。</li>
+              <li>專業版年繳：訂閱，同一裝置約 366 天可解鎖完整報告。</li>
+            </>
+          ) : null}
         </ul>
       </section>
       <section>
@@ -52,7 +64,18 @@ export default function TermsPage() {
       <section>
         <h2 className="text-base font-semibold text-zinc-950 dark:text-white">8. 聯絡</h2>
         <p className="mt-2">
-          請透過 Paddle 交易通知信，或本站方案頁標示之結帳流程與營運者聯繫。本條款得以公告方式更新，更新後繼續使用視為同意。
+          {SUPPORT_EMAIL ? (
+            <>
+              服務、付款或資料相關問題請寄至{" "}
+              <a className="underline" href={`mailto:${SUPPORT_EMAIL}`}>
+                {SUPPORT_EMAIL}
+              </a>
+              。
+            </>
+          ) : (
+            "付款問題可先透過 Paddle 交易通知信中的客服與交易管理連結處理。"
+          )}
+          本條款得以公告方式更新，更新後繼續使用視為同意。
         </p>
       </section>
     </LegalLayout>

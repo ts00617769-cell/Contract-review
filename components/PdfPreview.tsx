@@ -39,6 +39,8 @@ export function PdfPreview({ file }: PdfPreviewProps) {
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         canvas.className = "mb-3 w-full rounded-sm bg-white shadow-sm";
+        canvas.setAttribute("role", "img");
+        canvas.setAttribute("aria-label", `PDF 第 ${pageNumber} 頁預覽`);
         const context = canvas.getContext("2d");
         if (!context) continue;
         await page.render({ canvas, canvasContext: context, viewport }).promise;

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DISCLAIMER } from "@/lib/disclaimer";
+import { SUPPORT_EMAIL } from "@/lib/site";
 
 export function SiteFooter() {
   return (
@@ -17,6 +18,14 @@ export function SiteFooter() {
         <Link href="/pricing" className="hover:text-zinc-950 dark:hover:text-white">
           方案與價格
         </Link>
+        {SUPPORT_EMAIL ? (
+          <a
+            href={`mailto:${SUPPORT_EMAIL}`}
+            className="hover:text-zinc-950 dark:hover:text-white"
+          >
+            聯絡客服
+          </a>
+        ) : null}
       </nav>
       <p className="mx-auto max-w-3xl text-center text-xs leading-6 text-zinc-500">
         {DISCLAIMER}

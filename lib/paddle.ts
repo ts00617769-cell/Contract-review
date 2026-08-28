@@ -27,6 +27,15 @@ export function assertTokenMatchesEnvironment(token: string, env: PaddleEnv): vo
   }
 }
 
+export function assertApiKeyMatchesEnvironment(apiKey: string, env: PaddleEnv): void {
+  if (env === "production" && !apiKey.startsWith("pdl_live_apikey_")) {
+    throw new Error("Live 環境必須使用 pdl_live_apikey_ 開頭的 Paddle API key。");
+  }
+  if (env === "sandbox" && !apiKey.startsWith("pdl_sdbx_apikey_")) {
+    throw new Error("Sandbox 環境必須使用 pdl_sdbx_apikey_ 開頭的 Paddle API key。");
+  }
+}
+
 export function readPaddleBrowserConfig():
   | { ok: true; token: string; environment: PaddleEnv }
   | { ok: false; error: string } {
@@ -44,11 +53,25 @@ export function readPaddleBrowserConfig():
 }
 
 export function paddleConfigured(): boolean {
-  return readPaddleBrowserConfig().ok && Boolean(process.env.PADDLE_API_KEY?.trim());
+  const browser = readPaddleBrowserConfig();
+  const apiKey = process.env.PADDLE_API_KEY?.trim();
+  const priceId =
+    process.env.NEXT_PUBLIC_PADDLE_PRICE_ONETIME?.trim() ||
+    process.env.NEXT_PUBLIC_PADDLE_PRICE_ID?.trim();
+  const accessSecret =
+    process.env.ACCESS_TOKEN_SECRET?.trim() ||
+    (process.env.NODE_ENV !== "production" ? apiKey : null);
+  if (!browser.ok || !apiKey || !priceId || !accessSecret) return false;
+  try {
+    assertApiKeyMatchesEnvironment(apiKey, browser.environment);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** @deprecated Prefer PRICING_TIERS. Kept so older unlock paths still compile. */
 export const PADDLE_PRICE_ID =
   process.env.NEXT_PUBLIC_PADDLE_PRICE_ONETIME?.trim() ||
   process.env.NEXT_PUBLIC_PADDLE_PRICE_ID?.trim() ||
-  "pri_01m132przkafxjxvmvy5kjrdg3";
+  "";

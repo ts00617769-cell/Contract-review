@@ -23,12 +23,13 @@ export async function runContractReview(options: {
 }): Promise<ReviewResult> {
   const result: ReviewResult = {
     engine: "rules",
-    usedFallback: true,
+    usedFallback: false,
     summary: "",
     findings: scanWithRuleLibrary(options.text),
     pageCount: options.pageCount,
     fileName: options.fileName,
     isSample: Boolean(options.preferRulesOnly),
+    access: "full",
   };
   result.summary =
     result.findings.length > 0
@@ -49,10 +50,13 @@ export async function runContractReview(options: {
       pageCount: options.pageCount,
       fileName: options.fileName,
       isSample: Boolean(options.preferRulesOnly),
+      access: "full",
     };
-  } catch {
+  } catch (caught) {
+    console.error("OpenAI contract review failed", caught);
     return {
       ...result,
+      usedFallback: true,
       summary: `AI 這次沒接上，先用台灣接案規則庫幫你掃。${result.summary}`,
     };
   }

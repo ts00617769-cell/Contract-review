@@ -24,12 +24,19 @@ export async function POST(request: Request) {
   }
   if (!verified.ok) {
     return NextResponse.json(
-      { error: "付款尚未確認。請確認已在 Vercel 設定 PADDLE_API_KEY。" },
-      { status: 402 },
+      { error: "付款仍在處理中，請稍候再試。" },
+      { status: 409 },
     );
   }
 
-  const response = NextResponse.json({ paid: true, plan: verified.plan });
-  response.headers.append("Set-Cookie", paidAccessCookieHeader(verified.plan));
-  return response;
+  try {
+    const response = NextResponse.json({ paid: true, plan: verified.plan });
+    response.headers.set("Cache-Control", "no-store");
+    response.headers.append("Set-Cookie", paidAccessCookieHeader(verified.plan));
+    return response;
+  } catch (caught) {
+    const message =
+      caught instanceof Error ? caught.message : "付費權限設定不完整。";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

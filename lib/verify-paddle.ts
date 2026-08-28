@@ -1,8 +1,9 @@
-import { paddleEnvironment } from "@/lib/paddle";
+import {
+  assertApiKeyMatchesEnvironment,
+  paddleEnvironment,
+} from "@/lib/paddle";
 import { allConfiguredPriceIds, planFromPriceId } from "@/lib/pricing-tiers";
 import type { PaidPlan } from "@/lib/quota";
-
-const PAID_STATUSES = new Set(["completed", "paid", "billed"]);
 
 type TransactionPayload = {
   data?: {
@@ -14,13 +15,14 @@ type TransactionPayload = {
 export async function verifyPaidTransaction(
   transactionId: string,
 ): Promise<{ ok: false } | { ok: true; plan: PaidPlan }> {
-  if (!/^txn_[a-z0-9]+$/i.test(transactionId)) return { ok: false };
+  if (!/^txn_[a-z0-9]{26}$/.test(transactionId)) return { ok: false };
 
   const apiKey = process.env.PADDLE_API_KEY?.trim();
-  if (!apiKey) return { ok: false };
+  if (!apiKey) throw new Error("PADDLE_API_KEY 尚未設定。");
 
-  const host =
-    paddleEnvironment() === "sandbox" ? "sandbox-api.paddle.com" : "api.paddle.com";
+  const environment = paddleEnvironment();
+  assertApiKeyMatchesEnvironment(apiKey, environment);
+  const host = environment === "sandbox" ? "sandbox-api.paddle.com" : "api.paddle.com";
 
   const response = await fetch(`https://${host}/transactions/${transactionId}`, {
     headers: {
@@ -30,20 +32,25 @@ export async function verifyPaidTransaction(
     cache: "no-store",
   });
 
-  if (!response.ok) return { ok: false };
+  if (response.status === 404) return { ok: false };
+  if (!response.ok) {
+    throw new Error(`Paddle 交易查詢失敗（${response.status}）。`);
+  }
 
   const payload = (await response.json()) as TransactionPayload;
   const status = payload.data?.status;
-  if (!status || !PAID_STATUSES.has(status)) return { ok: false };
+  if (status !== "completed") return { ok: false };
 
   const allowed = new Set(allConfiguredPriceIds());
+  if (allowed.size === 0) throw new Error("尚未設定任何 Paddle Price ID。");
   const items = payload.data?.items ?? [];
   const matchedId = items
     .map((item) => item.price?.id)
-    .find((id): id is string => Boolean(id && (allowed.size === 0 || allowed.has(id))));
+    .find((id): id is string => Boolean(id && allowed.has(id)));
 
-  if (items.length > 0 && allowed.size > 0 && !matchedId) return { ok: false };
+  if (!matchedId) return { ok: false };
 
-  const plan = planFromPriceId(matchedId) ?? "onetime";
+  const plan = planFromPriceId(matchedId);
+  if (!plan) return { ok: false };
   return { ok: true, plan };
 }

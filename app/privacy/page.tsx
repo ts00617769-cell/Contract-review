@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import { LegalLayout } from "@/components/LegalLayout";
+import { SUPPORT_EMAIL } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "隱私權政策｜契約哨兵",
+  alternates: { canonical: "/privacy" },
+};
 
 export default function PrivacyPage() {
   return (
@@ -18,8 +25,8 @@ export default function PrivacyPage() {
       <section>
         <h2 className="text-base font-semibold text-zinc-950 dark:text-white">2. 合約內容怎麼用</h2>
         <p className="mt-2">
-          合約只在分析請求當下處理，用來產生風險標註與建議。我們不以你的合約作為對外販售資料，也不把合約拿去訓練本服務以外的通用模型。分析過程可能呼叫 OpenAI
-          等處理器；該次請求仍受其資料處理條款約束。
+          合約只在分析請求當下處理，用來產生風險標註與建議。我們不以你的合約作為對外販售資料，也不主動用合約內容訓練本服務或通用模型。分析過程可能將內容傳送至 OpenAI
+          等處理器；第三方如何保存與處理該次請求，仍受其資料處理條款與本服務採用的 API 設定約束。
         </p>
         <p className="mt-2">
           我們不把合約內容做成可長期查閱的雲端資料庫。請注意：瀏覽器、網路傳輸與第三方處理器仍可能短暫接觸內容。
@@ -41,7 +48,18 @@ export default function PrivacyPage() {
       <section>
         <h2 className="text-base font-semibold text-zinc-950 dark:text-white">5. 保存與權利</h2>
         <p className="mt-2">
-          合約本文不作為長期檔案保存。Cookie 於到期或你清除瀏覽器資料後失效。如需查詢、刪除與本服務相關之個人資料，請透過 Paddle 收據或本站公布之聯繫方式提出。
+          合約本文不作為本站可長期查閱的檔案保存。Cookie 於到期或你清除瀏覽器資料後失效。如需查詢、刪除與本服務相關之個人資料，
+          {SUPPORT_EMAIL ? (
+            <>
+              請寄至{" "}
+              <a className="underline" href={`mailto:${SUPPORT_EMAIL}`}>
+                {SUPPORT_EMAIL}
+              </a>
+              。
+            </>
+          ) : (
+            "付款相關資料請先透過 Paddle 收據中的客服連結提出。"
+          )}
         </p>
       </section>
       <section>

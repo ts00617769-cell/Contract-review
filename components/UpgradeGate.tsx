@@ -2,10 +2,9 @@
 
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { readPaddleBrowserConfig } from "@/lib/paddle";
-import { oneTimePriceId } from "@/lib/pricing-tiers";
+import { oneTimePriceId, SUBSCRIPTIONS_ENABLED } from "@/lib/pricing-tiers";
 
 type UpgradeGateProps = {
   onUnlocked?: () => void;
@@ -14,7 +13,6 @@ type UpgradeGateProps = {
 const ONE_TIME_PRICE = oneTimePriceId();
 
 export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
-  const router = useRouter();
   const paddleRef = useRef<Paddle | null>(null);
   const onUnlockedRef = useRef(onUnlocked);
   const [ready, setReady] = useState(false);
@@ -34,17 +32,22 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch("/api/billing/unlock", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ transactionId }),
-        });
-        const data = (await response.json()) as { error?: string };
-        if (!response.ok) {
-          throw new Error(data.error || "付款已收到，但解鎖失敗。請重新整理後再試。");
+        for (let attempt = 0; attempt < 6; attempt += 1) {
+          const response = await fetch("/api/billing/unlock", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ transactionId }),
+          });
+          const data = (await response.json()) as { error?: string };
+          if (response.ok) {
+            onUnlockedRef.current?.();
+            return;
+          }
+          if (response.status !== 409 || attempt === 5) {
+            throw new Error(data.error || "付款已收到，但解鎖失敗。請保留 Paddle 收據。");
+          }
+          await new Promise((resolve) => window.setTimeout(resolve, 1500));
         }
-        onUnlockedRef.current?.();
-        router.push(`/welcome?_ptxn=${encodeURIComponent(transactionId)}`);
       } catch (caught) {
         setError(caught instanceof Error ? caught.message : "解鎖失敗。");
       } finally {
@@ -71,7 +74,7 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
     return () => {
       cancelled = true;
     };
-  }, [config, router]);
+  }, [config]);
 
   function openCheckout() {
     setError(null);
@@ -93,7 +96,6 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
       settings: {
         displayMode: "overlay",
         variant: "one-page",
-        successUrl: `${window.location.origin}/welcome`,
       },
     });
   }
@@ -114,7 +116,7 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
           解鎖這份合約的完整拆解與修約信
         </h2>
         <p className="mt-3 text-sm leading-7 text-zinc-500">
-          一次付清即可在這台裝置查看完整對策與修約信，約 31 天、不自動續訂。經常拆合約請改訂專業版。
+          一次付清即可在這台裝置查看完整對策與修約信，約 31 天、不自動續訂。
         </p>
       </div>
 
@@ -159,12 +161,14 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
               ? "一次付清，解鎖這台裝置"
               : "載入結帳…"}
         </button>
-        <Link
-          href="/pricing"
-          className="rounded-lg border border-zinc-300 px-5 py-3 text-sm font-semibold text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-900"
-        >
-          查看訂閱方案
-        </Link>
+        {SUBSCRIPTIONS_ENABLED ? (
+          <Link
+            href="/pricing"
+            className="rounded-lg border border-zinc-300 px-5 py-3 text-sm font-semibold text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-900"
+          >
+            查看訂閱方案
+          </Link>
+        ) : null}
       </div>
       {error ? (
         <p role="alert" className="mt-4 text-center text-sm text-red-600">
