@@ -12,6 +12,10 @@ export type ContractRule = {
   absencePatterns?: RegExp[];
   /** For absence rules, only fire when at least one contextual pattern exists. */
   contextPatterns?: RegExp[];
+  /** One-line, plain-spoken warning shown as the finding headline. */
+  verdict?: string;
+  /** A sentence the freelancer can use to open the negotiation. */
+  counterMeasure?: string;
   why: string;
   suggestion: string;
 };
@@ -34,6 +38,9 @@ export const TAIWAN_FREELANCER_RULES: ContractRule[] = [
       /確認無誤後再(?:行)?付款/,
     ],
     why: "把付款綁在主觀「滿意／認可」且未設驗收期限，等於讓客戶可以無限期拖款。台灣接案常見爭議點。",
+    verdict: "「滿意」沒有終點，這條就是讓付款日無限往後拖。",
+    counterMeasure:
+      "你可以說：「我願意配合驗收，但需要把標準和回覆天數寫清楚，雙方才有同一把尺，也不會卡到後續排程。」",
     suggestion:
       "建議改為：甲方應於乙方交付後○個工作日內完成驗收；逾期未以書面提出具體異議者，視為驗收合格。該期款項應於驗收合格（或視為合格）後○日內給付。",
   },
@@ -66,6 +73,9 @@ export const TAIWAN_FREELANCER_RULES: ContractRule[] = [
       /發票日後\s*(60|90|120)/,
     ],
     why: "長帳期加上「對帳後起算」會讓現金流不可預期，接案者承擔客戶內部流程延誤。",
+    verdict: "你現在交件，三個月後才拿錢，等於免費借客戶現金流。",
+    counterMeasure:
+      "你可以說：「90 天帳期對小型團隊的現金流負擔太重，希望改成簽約、中期、交付三階段，最晚 30 天內付款。」",
     suggestion:
       "建議改為：採分期（簽約／中期／驗收），或月結最長 30 天，且以「交付日或發票日（孰早）」起算，不以客戶內部對帳完成為條件。",
   },
@@ -188,6 +198,9 @@ export const TAIWAN_FREELANCER_RULES: ContractRule[] = [
       /重做至合格/,
     ],
     why: "沒有修改輪次與「範圍外改版另計」，時程與報價會被吃乾。",
+    verdict: "改到滿意為止，就是用一份報價買走你無限工時。",
+    counterMeasure:
+      "你可以說：「為了守住時程和品質，我會含兩輪原需求內修改；超過輪次或改需求就另外估工時，這樣雙方都好控管。」",
     suggestion:
       "建議改為：每階段含○次合理範圍內修改；超出次數、變更需求或已定稿後之改版，另計費用與工期。",
   },
@@ -203,6 +216,9 @@ export const TAIWAN_FREELANCER_RULES: ContractRule[] = [
       /乙方應配合修改.{0,12}(?:至驗收通過|至甲方滿意)/,
     ],
     why: "驗收沒有客觀標準與回覆期限，客戶可持續以未達期待為由拒絕驗收、要求修改並延後付款。",
+    verdict: "驗收規則由客戶臨時決定，你永遠都可能被說還沒做完。",
+    counterMeasure:
+      "你可以說：「我們先把驗收規格和五個工作日回覆期寫進去，沒有具體異議就視為通過，避免專案一直懸著。」",
     suggestion:
       "建議改為：甲方應於每次交付後 5 個工作日內，依本契約約定之規格一次以書面提出具體異議；逾期未提出者視為驗收合格。每階段包含 2 次原需求範圍內修改，新增或變更需求另行報價並順延工期。",
   },
@@ -324,6 +340,9 @@ export const TAIWAN_FREELANCER_RULES: ContractRule[] = [
       /同意不行使.{0,8}著作人格權/,
     ],
     why: "依台灣著作權法，著作人格權專屬著作人且不得讓與或繼承；全面、永久不行使約定仍會大幅限制姓名表示及禁止不當修改等權利。",
+    verdict: "這不是普通授權，是要你連作品被亂改都不能出聲。",
+    counterMeasure:
+      "你可以說：「商業使用我可以配合，但人格權不做全面拋棄；請限縮在已付款成果與必要調整，也保留不損害我名譽的底線。」",
     suggestion:
       "建議改為：乙方保有著作人格權。於甲方依約付清全部款項後，乙方僅在本契約明定之利用範圍及不損害乙方名譽之前提下，同意不對甲方行使著作人格權；甲方如為實際使用所必要，得進行合理格式調整。",
   },
@@ -343,6 +362,9 @@ export const TAIWAN_FREELANCER_RULES: ContractRule[] = [
       /(?:讓與|移轉|歸屬).{0,20}(?:全部款項|全額|尾款).{0,12}(?:付清|結清|支付完畢)/,
     ],
     why: "若權利在簽約或完成作品時即移轉，客戶即使尚未付清尾款也可能主張已取得成果，接案方將失去最重要的付款保障。",
+    verdict: "權利先交、尾款後付，是典型的不付尾款陷阱。",
+    counterMeasure:
+      "你可以說：「成果使用完全沒問題，但權利移轉要和付款同步；尾款付清後立即移轉，對雙方最公平也最清楚。」",
     suggestion:
       "建議改為：甲方付清本契約全部款項（含尾款及其他應付費用）後，乙方始就甲方選定且已付款之最終交付成果，依本契約約定範圍移轉著作財產權；付清前一切權利仍歸乙方。",
   },
@@ -472,6 +494,9 @@ export const TAIWAN_FREELANCER_RULES: ContractRule[] = [
 export function ruleLibraryBrief(): string {
   return TAIWAN_FREELANCER_RULES.map(
     (rule) =>
-      `- [${rule.id}] (${rule.category}/${rule.severity}) ${rule.title}：${rule.why}`,
+      `- [${rule.id}] (${rule.category}/${rule.severity}) ${rule.title}
+  老鳥判斷：${rule.verdict ?? `這條把「${rule.title}」的成本丟給接案方。`}
+  實際代價：${rule.why}
+  談判方向：${rule.counterMeasure ?? "把模糊空間寫死，不接受口頭保證；付款、工時與權利要同步。"}`,
   ).join("\n");
 }

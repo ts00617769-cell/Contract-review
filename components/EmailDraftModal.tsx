@@ -34,8 +34,8 @@ function buildEmail(findings: Finding[], focusId?: string | null): string {
   const requests = risks
     .map(
       (finding, index) => `${index + 1}. ${finding.title}
-考量：${finding.why}
-建議文字：${finding.suggestion}`,
+調整原因：${finding.riskDetail}
+建議文字：${finding.suggestedClause}`,
     )
     .join("\n\n");
 
@@ -81,7 +81,7 @@ export function EmailDraftModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-[var(--ink)]/55 p-4"
+      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -90,25 +90,25 @@ export function EmailDraftModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="email-draft-title"
-        className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-[var(--line)] bg-[var(--paper)] p-5 shadow-2xl md:p-7"
+        className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xl dark:border-zinc-800 dark:bg-zinc-950 md:p-7"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold tracking-[0.2em] text-[var(--brass)]">
-              談判武器
+            <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">
+              Negotiation draft
             </p>
-            <h2 id="email-draft-title" className="mt-2 font-serif text-2xl">
-              委婉修約信
+            <h2 id="email-draft-title" className="mt-2 text-2xl font-semibold tracking-tight">
+              不撕破臉的修約信
             </h2>
-            <p className="mt-2 text-sm text-[var(--muted)]">
-              已整合本次所有高、中風險項目；寄出前請依合作情境調整稱謂與內容。
+            <p className="mt-2 text-sm text-zinc-500">
+              紅黃項目都整理好了。寄出前把稱謂和專案名稱換掉。
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="關閉"
-            className="rounded-full border border-[var(--line)] px-3 py-1.5 text-sm"
+            className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
           >
             關閉
           </button>
@@ -118,13 +118,13 @@ export function EmailDraftModal({
           readOnly
           value={draft}
           aria-label="修約信內容"
-          className="mt-5 min-h-[420px] w-full resize-y rounded-xl border border-[var(--line)] bg-white/45 p-4 text-sm leading-7 outline-none"
+          className="mt-5 min-h-[420px] w-full resize-y rounded-xl border border-zinc-300 bg-zinc-50 p-4 text-sm leading-7 text-zinc-800 outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
         />
         <div className="mt-4 flex justify-end">
           <button
             type="button"
             onClick={() => void copyDraft()}
-            className="rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-medium text-[var(--paper)]"
+            className="rounded-lg bg-zinc-950 px-5 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950"
           >
             {copied ? "已複製信件" : "一鍵複製完整信件"}
           </button>

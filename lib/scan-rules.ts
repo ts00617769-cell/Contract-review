@@ -1,10 +1,45 @@
 import { TAIWAN_FREELANCER_RULES } from "./rules";
+import type { ContractRule } from "./rules";
 import type { Finding } from "./types";
 
 function snippetAround(text: string, index: number, length: number): string {
   const start = Math.max(0, index - 40);
   const end = Math.min(text.length, index + length + 80);
   return text.slice(start, end).replace(/\s+/g, " ").trim();
+}
+
+function verdictFor(rule: ContractRule): string {
+  if (rule.verdict) return rule.verdict;
+  if (rule.severity === "high") {
+    return `「${rule.title}」不是小字問題，簽下去就是你扛全部成本。`;
+  }
+  if (rule.severity === "medium") {
+    return `「${rule.title}」現在不講清楚，出事時一定是接案方吃虧。`;
+  }
+  return `這段可以再寫清楚，別把解釋空間全留給對方。`;
+}
+
+function counterMeasureFor(rule: ContractRule): string {
+  return (
+    rule.counterMeasure ??
+    `你可以說：「這一段會讓執行範圍不確定，我希望把${rule.title}的界線直接寫進合約；口頭共識之後很難對。」`
+  );
+}
+
+function toFinding(
+  rule: ContractRule,
+  quote: string,
+): Omit<Finding, "id" | "ruleId"> {
+  return {
+    category: rule.category,
+    severity: rule.severity,
+    title: rule.title,
+    quote,
+    verdict: verdictFor(rule),
+    riskDetail: rule.why,
+    counterMeasure: counterMeasureFor(rule),
+    suggestedClause: rule.suggestion.replace(/^建議(?:改為|加入|補上)?[：:]\s*/, ""),
+  };
 }
 
 export function scanWithRuleLibrary(rawText: string): Finding[] {
@@ -21,13 +56,8 @@ export function scanWithRuleLibrary(rawText: string): Finding[] {
         contextPatterns.some((pattern) => pattern.test(text));
       if (!hit && hasRequiredContext) {
         findings.push({
+          ...toFinding(rule, "（全文未見相關約定）"),
           id: `rule-${rule.id}`,
-          category: rule.category,
-          severity: rule.severity,
-          title: rule.title || `缺漏：${rule.id}`,
-          quote: "（全文未見相關約定）",
-          why: rule.why,
-          suggestion: rule.suggestion,
           ruleId: rule.id,
         });
       }
@@ -42,13 +72,8 @@ export function scanWithRuleLibrary(rawText: string): Finding[] {
       const match = global.exec(text);
       if (match && match.index >= 0) {
         findings.push({
+          ...toFinding(rule, snippetAround(text, match.index, match[0].length)),
           id: `rule-${rule.id}`,
-          category: rule.category,
-          severity: rule.severity,
-          title: rule.title,
-          quote: snippetAround(text, match.index, match[0].length),
-          why: rule.why,
-          suggestion: rule.suggestion,
           ruleId: rule.id,
         });
         break;

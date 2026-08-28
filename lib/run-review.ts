@@ -31,8 +31,8 @@ export async function runContractReview(options: {
   };
   result.summary =
     result.findings.length > 0
-      ? `規則庫標出 ${result.findings.length} 處需注意條款，請逐條對照原文與修改建議。`
-      : "規則庫未命中常見陷阱，仍建議人工閱讀付款、驗收、智財與終止條款。";
+      ? `抓到 ${result.findings.length} 個坑。先處理紅色項目，再談付款、驗收和權利移轉；別只收口頭承諾。`
+      : "這份沒有撞上常見地雷，但付款日、驗收期限、修改輪次和權利移轉還是要逐字看清楚。";
 
   if (options.preferRulesOnly || !hasOpenAiKey()) {
     return result;
@@ -51,7 +51,7 @@ export async function runContractReview(options: {
   } catch {
     return {
       ...result,
-      summary: `AI 初審暫時無法使用，已改以台灣接案規則庫標註。${result.summary}`,
+      summary: `AI 這次沒接上，先用台灣接案規則庫幫你掃。${result.summary}`,
     };
   }
 }

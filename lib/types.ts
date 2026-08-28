@@ -8,8 +8,10 @@ export type Finding = {
   severity: Severity;
   title: string;
   quote: string;
-  why: string;
-  suggestion: string;
+  verdict: string;
+  riskDetail: string;
+  counterMeasure: string;
+  suggestedClause: string;
   ruleId?: string;
 };
 

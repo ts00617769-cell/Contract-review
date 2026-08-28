@@ -2,29 +2,36 @@
 
 import { useState } from "react";
 import { EmailDraftModal } from "@/components/EmailDraftModal";
-import type { Finding, FindingCategory, ReviewResult } from "@/lib/types";
+import type { Finding, ReviewResult, Severity } from "@/lib/types";
 
-const LABELS: Record<FindingCategory, string> = {
-  unfair: "不對等條款",
-  payment: "模糊付款",
-  ip: "智財轉讓陷阱",
+const RISK_STYLE: Record<
+  Severity,
+  { label: string; badge: string; edge: string }
+> = {
+  high: {
+    label: "Danger",
+    badge: "border-red-200 bg-red-50 text-red-700 dark:border-red-950 dark:bg-red-950/40 dark:text-red-400",
+    edge: "border-l-red-500",
+  },
+  medium: {
+    label: "Warning",
+    badge:
+      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-950 dark:bg-amber-950/40 dark:text-amber-400",
+    edge: "border-l-amber-500",
+  },
+  low: {
+    label: "Safe",
+    badge:
+      "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-400",
+    edge: "border-l-emerald-500",
+  },
 };
 
-const SEVERITY: Record<string, string> = {
-  high: "高",
-  medium: "中",
-  low: "低",
-};
-
-function group(findings: Finding[]) {
-  return (["unfair", "payment", "ip"] as FindingCategory[]).map((category) => ({
-    category,
-    items: findings.filter((item) => item.category === category),
-  }));
+function count(result: ReviewResult, severity: Severity): number {
+  return result.findings.filter((item) => item.severity === severity).length;
 }
 
 export function FindingsPanel({ result }: { result: ReviewResult }) {
-  const groups = group(result.findings);
   const [emailOpen, setEmailOpen] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -34,116 +41,160 @@ export function FindingsPanel({ result }: { result: ReviewResult }) {
     setEmailOpen(true);
   }
 
-  async function copySuggestion(item: Finding) {
-    await navigator.clipboard.writeText(item.suggestion);
+  async function copyClause(item: Finding) {
+    await navigator.clipboard.writeText(item.suggestedClause);
     setCopiedId(item.id);
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg border border-[var(--line)] bg-[var(--paper)] p-4">
-        <p className="text-xs font-medium tracking-[0.18em] text-[var(--brass)] uppercase">
-          初審摘要
+    <div className="space-y-5">
+      <header className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
+              Review summary
+            </p>
+            <h2 className="mt-2 text-lg font-semibold text-zinc-950 dark:text-white">
+              先看結論
+            </h2>
+          </div>
+          <div className="flex gap-2 text-xs font-semibold">
+            <span className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-red-700 dark:border-red-950 dark:bg-red-950/40 dark:text-red-400">
+              {count(result, "high")} Danger
+            </span>
+            <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-amber-700 dark:border-amber-950 dark:bg-amber-950/40 dark:text-amber-400">
+              {count(result, "medium")} Warning
+            </span>
+            <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-700 dark:border-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-400">
+              {count(result, "low")} Safe
+            </span>
+          </div>
+        </div>
+        <p className="mt-4 text-sm leading-7 text-zinc-600 dark:text-zinc-300">
+          {result.summary}
         </p>
-        <p className="mt-2 text-[15px] leading-7 text-[var(--ink)]">{result.summary}</p>
-        <p className="mt-3 text-xs text-[var(--muted)]">
-          引擎：{result.engine === "openai" ? "OpenAI 結構化輸出" : "台灣接案規則庫"}
-          {result.usedFallback ? "（fallback）" : ""}
+        <p className="mt-3 text-xs text-zinc-400">
+          {result.engine === "openai" ? "AI 深度拆解" : "台灣接案規則庫"}
+          {result.usedFallback ? " · 備援模式" : ""}
         </p>
-      </div>
+      </header>
 
       {result.findings.length === 0 ? (
-        <p className="text-sm leading-6 text-[var(--muted)]">
-          這次沒有標到常見陷阱，不代表合約安全。請特別人工檢查付款、驗收、智財與終止條款。
-        </p>
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm leading-6 text-emerald-900 dark:border-emerald-950 dark:bg-emerald-950/30 dark:text-emerald-200">
+          沒撞上常見地雷。付款日、驗收期限、修改輪次與權利移轉仍要逐字確認。
+        </div>
       ) : null}
 
-      {groups.map(({ category, items }) =>
-        items.length === 0 ? null : (
-          <section key={category}>
-            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold tracking-wide">
-              <span className="h-2 w-2 rounded-full bg-[var(--signal)]" />
-              {LABELS[category]}
-              <span className="text-[var(--muted)]">({items.length})</span>
-            </h3>
-            <ul className="space-y-3">
-              {items.map((item) => (
-                <li
-                  key={item.id}
-                  className="rounded-lg border border-[var(--line)] bg-[var(--paper)] p-4"
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-[var(--signal-soft)] px-2 py-0.5 text-[11px] font-semibold text-[var(--signal)]">
-                      {SEVERITY[item.severity]}風險
-                    </span>
-                    {item.ruleId ? (
-                      <span className="font-mono text-[11px] text-[var(--muted)]">
-                        {item.ruleId}
+      <ol className="space-y-4">
+        {result.findings.map((item, index) => {
+          const style = RISK_STYLE[item.severity];
+          return (
+            <li
+              key={item.id}
+              className={`rounded-2xl border border-l-4 border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 ${style.edge}`}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="mt-0.5 font-mono text-xs text-zinc-400">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={`rounded-md border px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${style.badge}`}
+                      >
+                        {style.label}
                       </span>
-                    ) : null}
-                    <h4 className="text-[15px] font-semibold text-[var(--ink)]">
+                      {item.ruleId ? (
+                        <span className="font-mono text-[11px] text-zinc-400">
+                          {item.ruleId}
+                        </span>
+                      ) : null}
+                    </div>
+                    <h3 className="mt-2 text-base font-semibold text-zinc-950 dark:text-white">
                       {item.title}
-                    </h4>
+                    </h3>
                   </div>
-                  <p className="mt-3 border-l-2 border-[var(--brass)] pl-3 text-sm leading-6 text-[var(--muted)]">
-                    「{item.quote}」
+                </div>
+              </div>
+
+              <p className="mt-4 text-base font-semibold leading-7 text-zinc-900 dark:text-zinc-100">
+                {item.verdict}
+              </p>
+
+              <div className="mt-5 space-y-5">
+                <section>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400">
+                    原條款
                   </p>
-                  <p className="mt-3 text-sm leading-6">{item.why}</p>
+                  <blockquote className="mt-2 rounded-lg bg-zinc-100 p-3 text-sm leading-6 text-zinc-600 line-through decoration-red-500/60 dark:bg-zinc-900 dark:text-zinc-400">
+                    {item.quote}
+                  </blockquote>
+                </section>
 
-                  <div className="mt-4 grid gap-3">
-                    <div className="rounded-lg border border-red-200 bg-red-50/70 p-3 text-sm leading-6 text-red-950">
-                      <p className="text-[11px] font-semibold tracking-widest text-red-700">
-                        修改前
-                      </p>
-                      <p className="mt-1 line-through decoration-red-600/70 decoration-2">
-                        {item.quote}
-                      </p>
-                    </div>
-                    <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-sm leading-6 text-emerald-950">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-[11px] font-semibold tracking-widest text-emerald-800">
-                          建議修改後
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => void copySuggestion(item)}
-                          className="shrink-0 rounded-full border border-emerald-700/30 px-3 py-1 text-[11px] font-semibold text-emerald-900"
-                        >
-                          {copiedId === item.id ? "已複製" : "複製修改後條款"}
-                        </button>
-                      </div>
-                      <p className="mt-2">{item.suggestion}</p>
-                    </div>
-                  </div>
+                <section>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-red-500">
+                    踩雷原因
+                  </p>
+                  <p className="mt-2 text-sm leading-7 text-zinc-700 dark:text-zinc-300">
+                    {item.riskDetail}
+                  </p>
+                </section>
 
-                  <div className="mt-4 flex justify-end">
+                <section>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
+                    老鳥怎麼開口
+                  </p>
+                  <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50/70 p-3 text-sm leading-7 text-amber-950 dark:border-amber-950 dark:bg-amber-950/20 dark:text-amber-100">
+                    {item.counterMeasure}
+                  </p>
+                </section>
+
+                <section>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                      直接換成這條
+                    </p>
                     <button
                       type="button"
-                      onClick={() => openEmail(item.id)}
-                      className="rounded-full border border-[var(--ink)] px-4 py-2 text-xs font-semibold transition hover:bg-[var(--ink)] hover:text-[var(--paper)]"
+                      onClick={() => void copyClause(item)}
+                      className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-800 transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
                     >
-                      一鍵生成回覆客戶信件
+                      {copiedId === item.id ? "已複製" : "一鍵複製新條款"}
                     </button>
                   </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ),
-      )}
+                  <p className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-sm leading-7 text-emerald-950 dark:border-emerald-950 dark:bg-emerald-950/20 dark:text-emerald-100">
+                    {item.suggestedClause}
+                  </p>
+                </section>
+              </div>
+
+              <div className="mt-5 border-t border-zinc-100 pt-4 text-right dark:border-zinc-900">
+                <button
+                  type="button"
+                  onClick={() => openEmail(item.id)}
+                  className="text-xs font-semibold text-zinc-600 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
+                >
+                  把這些重點整理成修約信
+                </button>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
 
       {result.findings.length > 0 ? (
-        <section className="rounded-xl border border-[var(--brass)] bg-[var(--wash)]/70 p-5 text-center">
-          <p className="font-serif text-xl">把風險清單變成能寄出的修約信</p>
-          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-            自動整合所有高、中風險，整理成禮貌且具說服力的談判文字。
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6 text-white dark:border-zinc-700">
+          <p className="text-lg font-semibold">不想自己組句子？</p>
+          <p className="mt-2 text-sm leading-6 text-zinc-400">
+            把所有紅黃項目整理成一封有立場、但不會撕破臉的修約信。
           </p>
           <button
             type="button"
             onClick={() => openEmail()}
-            className="mt-4 rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-medium text-[var(--paper)]"
+            className="mt-4 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-zinc-200"
           >
-            一鍵生成回覆客戶信件
+            生成修約信
           </button>
         </section>
       ) : null}

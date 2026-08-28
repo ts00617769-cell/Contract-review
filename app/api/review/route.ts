@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { extractPdfText } from "@/lib/extract-pdf";
+import { extractWordText } from "@/lib/extract-word";
 import { freeReviewCookieHeader, hasUsedFreeReview } from "@/lib/quota";
 import { runContractReview } from "@/lib/run-review";
 import {
@@ -10,10 +11,14 @@ import {
 export const runtime = "nodejs";
 
 const MAX_BYTES = 10 * 1024 * 1024;
+const MAX_TEXT_CHARS = 24_000;
 
 export async function POST(request: Request) {
   const formData = await request.formData();
   const isSample = formData.get("sample") === "1";
+  const pastedText = formData.get("text");
+  const textInput = typeof pastedText === "string" ? pastedText.trim() : "";
+  const hasPastedText = textInput.length > 0;
 
   if (!isSample && (await hasUsedFreeReview())) {
     return NextResponse.json(
@@ -31,6 +36,9 @@ export async function POST(request: Request) {
 
   if (isSample) {
     text = SAMPLE_CONTRACT_TEXT;
+  } else if (hasPastedText) {
+    text = textInput.slice(0, MAX_TEXT_CHARS);
+    fileName = "貼上的合約文字";
   } else {
     const file = formData.get("file");
 
@@ -42,22 +50,35 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "檔案請小於 10MB。" }, { status: 400 });
     }
 
-    const typeOk =
-      file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-    if (!typeOk) {
-      return NextResponse.json({ error: "僅支援 PDF。" }, { status: 400 });
+    const lowerName = file.name.toLowerCase();
+    const isPdf =
+      file.type === "application/pdf" || lowerName.endsWith(".pdf");
+    const isDocx =
+      file.type ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      lowerName.endsWith(".docx");
+    if (!isPdf && !isDocx) {
+      return NextResponse.json(
+        { error: "目前支援 PDF 與 Word .docx；舊版 .doc 請先另存為 .docx。" },
+        { status: 400 },
+      );
     }
 
     const bytes = new Uint8Array(await file.arrayBuffer());
 
     try {
-      const extracted = await extractPdfText(bytes);
-      pageCount = extracted.pageCount;
-      text = extracted.text;
+      if (isPdf) {
+        const extracted = await extractPdfText(bytes);
+        pageCount = extracted.pageCount;
+        text = extracted.text;
+      } else {
+        text = await extractWordText(bytes);
+        pageCount = 1;
+      }
       fileName = file.name;
     } catch {
       return NextResponse.json(
-        { error: "無法讀取這份 PDF，請改用可選取文字的檔案。" },
+        { error: "讀不到檔案內容。PDF 請使用可選取文字版本；Word 請使用 .docx。" },
         { status: 400 },
       );
     }
@@ -67,7 +88,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "抽到的文字過少（可能是掃描件或圖片 PDF）。請提供可複製文字的合約檔。",
+          "合約文字太少，無法判讀。請貼上完整內容，或提供可選取文字的 PDF / .docx。",
       },
       { status: 400 },
     );

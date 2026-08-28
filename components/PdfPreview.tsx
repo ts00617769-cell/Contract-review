@@ -55,14 +55,14 @@ export function PdfPreview({ file }: PdfPreviewProps) {
 
   return (
     <div className="flex h-full min-h-[320px] flex-col">
-      <div className="mb-3 flex items-baseline justify-between gap-3 text-xs tracking-wide text-[var(--muted)]">
+      <div className="mb-3 flex items-baseline justify-between gap-3 text-xs text-zinc-500">
         <span>{file.name}</span>
         {pages > 0 ? <span>{pages} 頁</span> : null}
       </div>
       {error ? <p className="mb-3 text-sm text-amber-800">{error}</p> : null}
       <div
         ref={hostRef}
-        className="min-h-0 flex-1 overflow-auto rounded-md border border-[var(--line)] bg-[#d8d2c6] p-3"
+        className="min-h-0 flex-1 overflow-auto rounded-xl border border-zinc-200 bg-zinc-100 p-3 dark:border-zinc-800 dark:bg-zinc-900"
       />
     </div>
   );

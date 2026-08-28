@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #1c1914;
-  --paper: #f4efe6;
-  --wash: #ebe4d6;
-  --line: #d5ccbb;
-  --muted: #6f675c;
-  --brass: #8a6a32;
-  --signal: #9b3d2a;
-  --signal-soft: #f3ddd6;
-  --background: #efe8db;
-  --foreground: #1c1914;
+  --ink: #18181b;
+  --paper: #ffffff;
+  --wash: #f4f4f5;
+  --line: #e4e4e7;
+  --muted: #71717a;
+  --brass: #3f3f46;
+  --signal: #dc2626;
+  --signal-soft: #fef2f2;
+  --background: #fafafa;
+  --foreground: #18181b;
 }
 
 @theme inline {
@@ -28,11 +28,33 @@ body {
 
 body {
   font-family: var(--font-sans-tc), "Noto Sans TC", sans-serif;
-  background-image:
-    radial-gradient(1200px 500px at 10% -10%, rgba(138, 106, 50, 0.08), transparent),
-    linear-gradient(180deg, #f7f1e6 0%, #efe8db 40%, #e7dfd0 100%);
 }
 
 .font-serif {
   font-family: var(--font-serif-tc), "Noto Serif TC", serif;
+}
+
+::selection {
+  background: #18181b;
+  color: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #fafafa;
+    --paper: #09090b;
+    --wash: #18181b;
+    --line: #27272a;
+    --muted: #a1a1aa;
+    --brass: #d4d4d8;
+    --signal: #f87171;
+    --signal-soft: #450a0a;
+    --background: #09090b;
+    --foreground: #fafafa;
+  }
+
+  ::selection {
+    background: #fafafa;
+    color: #18181b;
+  }
 }
