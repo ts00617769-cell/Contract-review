@@ -165,12 +165,12 @@ export function PricingTable({ countryCode, customerEmail }: PricingTableProps) 
             </div>
           </div>
           <p className="mt-3 text-center text-xs text-zinc-400">
-            月繳／年繳只影響專業版。31 天解鎖不續訂。
+            月繳／年繳只影響專業版。單次解鎖只開一份報告、不續訂。
           </p>
         </>
       ) : (
         <p className="text-center text-xs text-zinc-400">
-          31 天解鎖為一次付清、不自動續訂。
+          單次解鎖 $2.99 為一次付清，只開這一份完整報告。
         </p>
       )}
 

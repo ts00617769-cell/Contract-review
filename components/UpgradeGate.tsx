@@ -116,7 +116,7 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
           解鎖這份合約的完整拆解與修約信
         </h2>
         <p className="mt-3 text-sm leading-7 text-zinc-500">
-          一次付清即可在這台裝置查看完整對策與修約信，約 31 天、不自動續訂。
+          一次付清 $2.99，解鎖這一份合約的完整對策與修約信。不自動續訂，下一份需再買。
         </p>
       </div>
 
@@ -142,8 +142,8 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
           </p>
           <ul className="mt-5 space-y-2 text-sm text-zinc-300">
             <li>完整風險報告與修約信</li>
-            <li>同一瀏覽器約 31 天有效</li>
-            <li>不限這段期間的分析份數</li>
+            <li>只解鎖這一份合約</li>
+            <li>不自動續訂、不吃到飽</li>
           </ul>
         </article>
       </div>
@@ -158,7 +158,7 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
           {loading
             ? "確認付款中…"
             : ready || !config.ok
-              ? "一次付清，解鎖這台裝置"
+              ? "一次付清，解鎖這份報告"
               : "載入結帳…"}
         </button>
         {SUBSCRIPTIONS_ENABLED ? (

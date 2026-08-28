@@ -56,7 +56,7 @@ Checkout 完成後，前端從 `checkout.completed` 事件取得交易編號並�
 不要假設 Paddle 會替一般 `successUrl` 自動附加 `_ptxn`。
 
 目前沒有帳號與資料庫，無法把訂閱續扣可靠地綁回使用者，因此正式環境應保持
-`NEXT_PUBLIC_ENABLE_SUBSCRIPTIONS=false`。現階段只販售一次付清的 31 天解鎖。
+`NEXT_PUBLIC_ENABLE_SUBSCRIPTIONS=false`。現階段只販售一次付清的單次解鎖（一份合約）。
 | `NEXT_PUBLIC_PADDLE_ENV` | 必填：`production` 或 `sandbox`。未設定會直接失敗 |
 | `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` | Paddle Client-side Token（live_ / test_） |
 | `PADDLE_API_KEY` | 伺服器確認付款用，不可加 `NEXT_PUBLIC_` |

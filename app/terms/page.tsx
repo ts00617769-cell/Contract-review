@@ -28,7 +28,7 @@ export default function TermsPage() {
         <h2 className="text-base font-semibold text-zinc-950 dark:text-white">3. 方案</h2>
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>入門版：每月可免費分析 1 份合約，僅顯示標題與判決；完整對策需付費。</li>
-          <li>單次解鎖：一次付清、不自動續訂。付款後，同一裝置約 31 天可解鎖完整報告（不限份數）。</li>
+          <li>單次解鎖：一次付清、不自動續訂。付款後可解鎖「這一份」合約的完整報告；下一份需再次購買。</li>
           {SUBSCRIPTIONS_ENABLED ? (
             <>
               <li>專業版月繳：訂閱，同一裝置約 31 天可解鎖完整報告；到期是否續扣由 Paddle 訂閱設定決定。</li>

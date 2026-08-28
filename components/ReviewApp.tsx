@@ -99,12 +99,11 @@ export function ReviewApp({
 
       const nextResult = data as ReviewResult;
       setResult(nextResult);
-      if (nextResult.access === "full" && !nextResult.isSample) {
-        setPaid(true);
-        setQuotaUsed(false);
-      } else if (!paid) {
-        setQuotaUsed(true);
-      }
+      const quota = (await fetch("/api/quota").then((response) =>
+        response.json(),
+      )) as { used?: boolean; paid?: boolean };
+      setPaid(Boolean(quota.paid));
+      setQuotaUsed(Boolean(quota.used) && !quota.paid);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "分析失敗，請再試一次。");
     } finally {
@@ -288,7 +287,7 @@ export function ReviewApp({
         </div>
       </section>
 
-      {quotaUsed && !paid ? (
+      {quotaUsed && !paid && result?.access !== "full" ? (
         <UpgradeGate
           onUnlocked={() => {
             setPaid(true);

@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { extractPdfText } from "@/lib/extract-pdf";
 import { extractWordText } from "@/lib/extract-word";
-import { freeReviewCookieHeader, hasPaidAccess, hasUsedFreeReview } from "@/lib/quota";
+import {
+  clearPaidAccessCookieHeader,
+  freeReviewCookieHeader,
+  hasUsedFreeReview,
+  paidAccessPlan,
+} from "@/lib/quota";
 import { runContractReview } from "@/lib/run-review";
 import {
   SAMPLE_CONTRACT_NAME,
@@ -44,7 +49,8 @@ export async function POST(request: Request) {
   const textInput = typeof pastedText === "string" ? pastedText.trim() : "";
   const hasPastedText = textInput.length > 0;
 
-  const paid = await hasPaidAccess();
+  const paidPlan = await paidAccessPlan();
+  const paid = paidPlan !== null;
   if (!isSample && (await hasUsedFreeReview()) && !paid) {
     return NextResponse.json(
       {
@@ -139,6 +145,9 @@ export async function POST(request: Request) {
   const response = NextResponse.json(result);
   if (!isSample && !paid) {
     response.headers.append("Set-Cookie", freeReviewCookieHeader());
+  }
+  if (!isSample && paidPlan === "onetime" && result.access === "full") {
+    response.headers.append("Set-Cookie", clearPaidAccessCookieHeader());
   }
   return response;
 }

@@ -79,7 +79,13 @@ export type PaidPlan = "onetime" | "month" | "year";
 
 export function paidAccessDays(plan: PaidPlan): number {
   if (plan === "year") return 366;
+  if (plan === "onetime") return 7;
   return 31;
+}
+
+export function clearPaidAccessCookieHeader(): string {
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  return `${PAID_ACCESS_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax${secure}`;
 }
 
 export function paidAccessCookieHeader(plan: PaidPlan = "onetime"): string {
