@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { SUBSCRIPTIONS_ENABLED } from "@/lib/pricing-tiers";
 
 export function WelcomeClient({
   transactionId,
@@ -67,9 +66,7 @@ export function WelcomeClient({
         {status === "unlocking"
           ? "正在向 Paddle 確認交易，通常幾秒內完成，請勿關閉此頁。"
           : status === "ok"
-            ? SUBSCRIPTIONS_ENABLED
-              ? "單次解鎖只開這一份完整報告。訂閱則在有效期間內可不限份數查看。換裝置或清除 Cookie 後可能需要重新解鎖。"
-              : "單次解鎖已生效：可查看這一份合約的完整報告。下一份合約需再次購買。請先複製條款或下載修約信。"
+            ? "若為單次解鎖，只開這一份完整報告。若為月繳或年繳，有效期間內可不限份數查看。換裝置或清除 Cookie 後，站內解鎖可能失效；訂閱請改由 Paddle 收據連結取消，以免繼續扣款。"
             : status === "error"
               ? "系統目前無法確認這筆交易。請保留 Paddle 收據與交易編號，稍後重新開啟收據中的返回連結。"
               : "此頁沒有交易編號，因此尚未變更你的方案。若已付款，請從 Paddle 結帳完成頁或收據中的連結返回。"}

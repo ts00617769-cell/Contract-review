@@ -31,9 +31,6 @@ export type SubscriptionTier = {
 
 export type Tier = FreeTier | OneTimeTier | SubscriptionTier;
 
-export const SUBSCRIPTIONS_ENABLED =
-  process.env.NEXT_PUBLIC_ENABLE_SUBSCRIPTIONS === "true";
-
 function envPrice(
   name:
     | "NEXT_PUBLIC_PADDLE_PRICE_ONETIME"
@@ -56,7 +53,17 @@ function envPrice(
 
 const ONE_TIME_PRICE =
   envPrice("NEXT_PUBLIC_PADDLE_PRICE_ONETIME") ||
-  envPrice("NEXT_PUBLIC_PADDLE_PRICE_ID");
+  envPrice("NEXT_PUBLIC_PADDLE_PRICE_ID") ||
+  "pri_01m132przkafxjxvmvy5kjrdg3";
+const MONTH_PRICE =
+  envPrice("NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTH") ||
+  "pri_01m13jzkdzx1pk3ycjtm2pc71x";
+const YEAR_PRICE =
+  envPrice("NEXT_PUBLIC_PADDLE_PRICE_PRO_YEAR") ||
+  "pri_01m13kbvkdypa63eprk8p8w97j";
+
+/** Shown whenever month or year Price IDs are configured. */
+export const SUBSCRIPTIONS_ENABLED = Boolean(MONTH_PRICE || YEAR_PRICE);
 
 /**
  * Paid Price IDs come from Paddle Catalog (`pri_...`) or env vars.
@@ -77,7 +84,6 @@ export const PRICING_TIERS: Tier[] = [
   {
     name: "單次解鎖",
     oneTime: true,
-    highlighted: true,
     description: "一次付清、不自動續訂。只解鎖這一份合約的完整報告。",
     features: [
       "完整風險報告、替代條款與修約信",
@@ -87,28 +93,21 @@ export const PRICING_TIERS: Tier[] = [
     ],
     priceId: ONE_TIME_PRICE,
   },
-  ...(SUBSCRIPTIONS_ENABLED
-    ? [
-        {
-          name: "專業版" as const,
-          description: "訂閱制。適合經常拆合約；年繳同一裝置約一年有效。",
-          features: [
-            "完整風險報告、替代條款與修約信",
-            "有效期間不限分析份數",
-            "月繳約 31 天；年繳約 366 天",
-            "到期是否續扣由 Paddle 訂閱管理",
-          ],
-          priceId: {
-            month: envPrice(
-              "NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTH",
-            ),
-            year: envPrice(
-              "NEXT_PUBLIC_PADDLE_PRICE_PRO_YEAR",
-            ),
-          },
-        },
-      ]
-    : []),
+  {
+    name: "專業版",
+    highlighted: true,
+    description: "月繳或年繳。有效期間內同一裝置不限分析份數。",
+    features: [
+      "完整風險報告、替代條款與修約信",
+      "有效期間不限分析份數",
+      "月繳約 31 天；年繳約 366 天",
+      "到期是否續扣由 Paddle 訂閱管理",
+    ],
+    priceId: {
+      month: MONTH_PRICE,
+      year: YEAR_PRICE,
+    },
+  },
 ];
 
 export function isFreeTier(tier: Tier): tier is FreeTier {
@@ -127,6 +126,14 @@ export function oneTimePriceId(): string {
   return ONE_TIME_PRICE;
 }
 
+export function monthPriceId(): string {
+  return MONTH_PRICE;
+}
+
+export function yearPriceId(): string {
+  return YEAR_PRICE;
+}
+
 export function checkoutPriceId(tier: Tier, cycle: BillingCycle): string {
   if (isFreeTier(tier)) return "";
   if (isOneTimeTier(tier)) return tier.priceId;
@@ -135,24 +142,12 @@ export function checkoutPriceId(tier: Tier, cycle: BillingCycle): string {
 
 export function planFromPriceId(priceId: string | undefined): PaidPlan | null {
   if (!priceId) return null;
-  const oneTime = oneTimePriceId();
-  const pro = PRICING_TIERS.find(isSubscriptionTier);
-  if (oneTime && priceId === oneTime) return "onetime";
-  if (pro && priceId === pro.priceId.year) return "year";
-  if (pro && priceId === pro.priceId.month) return "month";
+  if (ONE_TIME_PRICE && priceId === ONE_TIME_PRICE) return "onetime";
+  if (YEAR_PRICE && priceId === YEAR_PRICE) return "year";
+  if (MONTH_PRICE && priceId === MONTH_PRICE) return "month";
   return null;
 }
 
 export function allConfiguredPriceIds(): string[] {
-  const ids = new Set<string>();
-  for (const tier of PRICING_TIERS) {
-    if (isFreeTier(tier)) continue;
-    if (isOneTimeTier(tier)) {
-      if (tier.priceId) ids.add(tier.priceId);
-      continue;
-    }
-    if (tier.priceId.month) ids.add(tier.priceId.month);
-    if (tier.priceId.year) ids.add(tier.priceId.year);
-  }
-  return [...ids];
+  return [ONE_TIME_PRICE, MONTH_PRICE, YEAR_PRICE].filter(Boolean);
 }

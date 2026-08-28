@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { LegalLayout } from "@/components/LegalLayout";
-import { SUBSCRIPTIONS_ENABLED } from "@/lib/pricing-tiers";
 import { SUPPORT_EMAIL } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -29,12 +28,8 @@ export default function TermsPage() {
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>入門版：每月可免費分析 1 份合約，僅顯示標題與判決；完整對策需付費。</li>
           <li>單次解鎖：一次付清、不自動續訂。付款後可解鎖「這一份」合約的完整報告；下一份需再次購買。</li>
-          {SUBSCRIPTIONS_ENABLED ? (
-            <>
-              <li>專業版月繳：訂閱，同一裝置約 31 天可解鎖完整報告；到期是否續扣由 Paddle 訂閱設定決定。</li>
-              <li>專業版年繳：訂閱，同一裝置約 366 天可解鎖完整報告。</li>
-            </>
-          ) : null}
+          <li>專業版月繳：訂閱，同一裝置約 31 天可不限份數查看完整報告；到期是否續扣由 Paddle 訂閱設定決定。</li>
+          <li>專業版年繳：訂閱，同一裝置約 366 天可不限份數查看完整報告。</li>
         </ul>
       </section>
       <section>

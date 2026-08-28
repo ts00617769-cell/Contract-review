@@ -40,7 +40,6 @@ npm run dev
 | `NEXT_PUBLIC_PADDLE_PRICE_ONETIME` | 單次解鎖 Price ID |
 | `NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTH` | 專業版月繳 Price ID |
 | `NEXT_PUBLIC_PADDLE_PRICE_PRO_YEAR` | 專業版年繳 Price ID |
-| `NEXT_PUBLIC_ENABLE_SUBSCRIPTIONS` | 預設 `false`；完成帳號與永久權限儲存後才開啟 |
 | `NEXT_PUBLIC_SITE_URL` | 正式站網址 |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | 客服與退款聯絡信箱 |
 
@@ -55,10 +54,4 @@ Checkout 完成後，前端從 `checkout.completed` 事件取得交易編號並�
 伺服器再向 Paddle API 查驗交易狀態與 Price ID，成功後才簽發付費權限 Cookie。
 不要假設 Paddle 會替一般 `successUrl` 自動附加 `_ptxn`。
 
-目前沒有帳號與資料庫，無法把訂閱續扣可靠地綁回使用者，因此正式環境應保持
-`NEXT_PUBLIC_ENABLE_SUBSCRIPTIONS=false`。現階段只販售一次付清的單次解鎖（一份合約）。
-| `NEXT_PUBLIC_PADDLE_ENV` | 必填：`production` 或 `sandbox`。未設定會直接失敗 |
-| `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` | Paddle Client-side Token（live_ / test_） |
-| `PADDLE_API_KEY` | 伺服器確認付款用，不可加 `NEXT_PUBLIC_` |
-| `NEXT_PUBLIC_PADDLE_PRICE_ONETIME` | 單次解鎖 `pri_` ID（$2.99） |
-| `NEXT_PUBLIC_PADDLE_PRICE_PRO_MONTH` / `PRO_YEAR` | 專業版月繳、年繳 `pri_` ID。入門版免費 |
+目前沒有登入帳號。單次解鎖只開一份報告；月繳約 31 天、年繳約 366 天，同一裝置可不限份數。取消訂閱請用 Paddle 收據連結。

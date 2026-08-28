@@ -3,7 +3,6 @@ import { headers } from "next/headers";
 import { PricingTable } from "@/components/PricingTable";
 import { SiteHeader } from "@/components/SiteHeader";
 import { countryFromHeaders } from "@/lib/request-country";
-import { SUBSCRIPTIONS_ENABLED } from "@/lib/pricing-tiers";
 
 export const metadata: Metadata = {
   title: "方案與價格｜契約哨兵",
@@ -24,8 +23,8 @@ export default async function PricingPage() {
           選一份適合你接案節奏的方案
         </h1>
         <p className="mt-4 text-sm leading-7 text-zinc-500 md:text-base">
-          入門版免費看結論。單次解鎖 $2.99 一次付清、不自動續訂，只開這一份完整報告。
-          {SUBSCRIPTIONS_ENABLED ? " 專業版可訂閱月繳或年繳。" : ""}
+          入門版免費看結論。單次解鎖一次付清、只開這一份完整報告。
+          經常拆合約可選專業版月繳或年繳，有效期間內同一裝置不限份數。
         </p>
       </header>
       <div className="mt-10">

@@ -4,28 +4,77 @@ import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { readPaddleBrowserConfig } from "@/lib/paddle";
-import { oneTimePriceId, SUBSCRIPTIONS_ENABLED } from "@/lib/pricing-tiers";
+import {
+  monthPriceId,
+  oneTimePriceId,
+  yearPriceId,
+} from "@/lib/pricing-tiers";
 
 type UpgradeGateProps = {
   onUnlocked?: () => void;
 };
 
-const ONE_TIME_PRICE = oneTimePriceId();
+type PaidOffer = {
+  key: "onetime" | "month" | "year";
+  name: string;
+  blurb: string;
+  features: string[];
+  priceId: string;
+  suffix: string;
+  highlighted?: boolean;
+};
 
 export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
   const paddleRef = useRef<Paddle | null>(null);
   const onUnlockedRef = useRef(onUnlocked);
   const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [prices, setPrices] = useState<Record<string, string>>({});
+  const [loadingPrices, setLoadingPrices] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const config = useMemo(() => readPaddleBrowserConfig(), []);
+
+  const offers = useMemo<PaidOffer[]>(
+    () =>
+      [
+        {
+          key: "onetime" as const,
+          name: "單次解鎖",
+          blurb: "一次付清，只開這一份完整報告。",
+          features: ["完整風險報告與修約信", "不自動續訂", "下一份需再買"],
+          priceId: oneTimePriceId(),
+          suffix: "/ 次",
+        },
+        {
+          key: "month" as const,
+          name: "專業版月繳",
+          blurb: "同一裝置約 31 天不限份數。",
+          features: ["完整報告不限份數", "約 31 天有效", "由 Paddle 自動續訂"],
+          priceId: monthPriceId(),
+          suffix: "/ 月",
+        },
+        {
+          key: "year" as const,
+          name: "專業版年繳",
+          blurb: "同一裝置約 366 天不限份數。",
+          features: ["完整報告不限份數", "約 366 天有效", "由 Paddle 自動續訂"],
+          priceId: yearPriceId(),
+          suffix: "/ 年",
+          highlighted: true,
+        },
+      ].filter((offer) => offer.priceId),
+    [],
+  );
 
   useEffect(() => {
     onUnlockedRef.current = onUnlocked;
   }, [onUnlocked]);
 
   useEffect(() => {
-    if (!config.ok) return;
+    if (!config.ok) {
+      setLoadingPrices(false);
+      return;
+    }
     let cancelled = false;
 
     async function confirmPayment(transactionId: string) {
@@ -64,19 +113,50 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
         if (typeof transactionId !== "string") return;
         void confirmPayment(transactionId);
       },
-    }).then((instance) => {
-      if (!cancelled && instance) {
-        paddleRef.current = instance;
-        setReady(true);
+    }).then(async (instance) => {
+      if (cancelled || !instance) return;
+      paddleRef.current = instance;
+      setReady(true);
+
+      const items = offers.map((offer) => ({
+        priceId: offer.priceId,
+        quantity: 1,
+      }));
+      if (items.length === 0) {
+        setLoadingPrices(false);
+        setError("尚未設定任何付費 Price ID。");
+        return;
+      }
+
+      try {
+        const preview = await instance.PricePreview({ items });
+        const next: Record<string, string> = {};
+        for (const line of preview.data.details.lineItems) {
+          next[line.price.id] = line.formattedTotals.total;
+        }
+        if (!cancelled) {
+          setPrices(next);
+          setError(null);
+        }
+      } catch (caught) {
+        if (!cancelled) {
+          setError(
+            caught instanceof Error
+              ? caught.message
+              : "無法載入價格。請確認 Default payment link 與網域審核。",
+          );
+        }
+      } finally {
+        if (!cancelled) setLoadingPrices(false);
       }
     });
 
     return () => {
       cancelled = true;
     };
-  }, [config]);
+  }, [config, offers]);
 
-  function openCheckout() {
+  function openCheckout(priceId: string) {
     setError(null);
     if (!config.ok) {
       setError(config.error);
@@ -87,12 +167,8 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
       setError("結帳元件還在載入，請稍候再點一次。");
       return;
     }
-    if (!ONE_TIME_PRICE) {
-      setError("尚未設定單次解鎖 Price ID。");
-      return;
-    }
     paddle.Checkout.open({
-      items: [{ priceId: ONE_TIME_PRICE, quantity: 1 }],
+      items: [{ priceId, quantity: 1 }],
       settings: {
         displayMode: "overlay",
         variant: "one-page",
@@ -113,63 +189,91 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
           id="upgrade-title"
           className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-white"
         >
-          解鎖這份合約的完整拆解與修約信
+          解鎖完整拆解與修約信
         </h2>
         <p className="mt-3 text-sm leading-7 text-zinc-500">
-          一次付清 $2.99，解鎖這一份合約的完整對策與修約信。不自動續訂，下一份需再買。
+          單次解鎖只開這一份。月繳、年繳在有效期間內可不限份數查看。價格以結帳頁為準。
         </p>
       </div>
 
-      <div className="mx-auto mt-8 grid max-w-3xl gap-4 md:grid-cols-2">
-        <article className="rounded-xl border border-zinc-200 p-5 dark:border-zinc-800">
-          <p className="text-sm font-semibold">入門版</p>
-          <p className="mt-3 text-3xl font-semibold">$0</p>
-          <ul className="mt-5 space-y-2 text-sm text-zinc-500">
-            <li>每月 1 份，先看標題與判決</li>
-            <li>踩雷範本完整免費</li>
-            <li>完整對策需付費</li>
-          </ul>
-        </article>
-        <article className="rounded-xl border border-zinc-950 bg-zinc-950 p-5 text-white dark:border-zinc-700">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold">單次解鎖</p>
-            <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-bold uppercase tracking-widest">
-              一次付清
-            </span>
-          </div>
-          <p className="mt-3 text-sm leading-6 text-zinc-300">
-            不自動續訂。價格以結帳頁顯示為準。
-          </p>
-          <ul className="mt-5 space-y-2 text-sm text-zinc-300">
-            <li>完整風險報告與修約信</li>
-            <li>只解鎖這一份合約</li>
-            <li>不自動續訂、不吃到飽</li>
-          </ul>
-        </article>
+      <div className="mx-auto mt-8 grid max-w-4xl gap-4 md:grid-cols-3">
+        {offers.map((offer) => {
+          const amount = prices[offer.priceId];
+          return (
+            <article
+              key={offer.key}
+              className={`flex flex-col rounded-xl border p-5 ${
+                offer.highlighted
+                  ? "border-zinc-950 bg-zinc-950 text-white dark:border-zinc-700"
+                  : "border-zinc-200 dark:border-zinc-800"
+              }`}
+            >
+              <p className="text-sm font-semibold">{offer.name}</p>
+              <p
+                className={`mt-2 text-sm leading-6 ${
+                  offer.highlighted ? "text-zinc-300" : "text-zinc-500"
+                }`}
+              >
+                {offer.blurb}
+              </p>
+              <p className="mt-4 text-2xl font-semibold">
+                {loadingPrices ? (
+                  <span className="text-base font-normal opacity-60">載入價格…</span>
+                ) : amount ? (
+                  <>
+                    {amount}
+                    <span
+                      className={`ml-1 text-sm font-normal ${
+                        offer.highlighted ? "text-zinc-400" : "text-zinc-500"
+                      }`}
+                    >
+                      {offer.suffix}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-base font-normal opacity-60">尚未設定</span>
+                )}
+              </p>
+              <ul
+                className={`mt-4 flex-1 space-y-2 text-sm ${
+                  offer.highlighted ? "text-zinc-300" : "text-zinc-500"
+                }`}
+              >
+                {offer.features.map((feature) => (
+                  <li key={feature}>{feature}</li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                disabled={loading || !ready || !offer.priceId}
+                onClick={() => openCheckout(offer.priceId)}
+                className={`mt-6 rounded-lg px-4 py-2.5 text-sm font-semibold disabled:opacity-40 ${
+                  offer.highlighted
+                    ? "bg-white text-zinc-950 hover:bg-zinc-200"
+                    : "bg-zinc-950 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950"
+                }`}
+              >
+                {loading
+                  ? "確認付款中…"
+                  : offer.key === "onetime"
+                    ? "解鎖這份報告"
+                    : offer.key === "month"
+                      ? "訂閱月繳"
+                      : "訂閱年繳"}
+              </button>
+            </article>
+          );
+        })}
       </div>
 
-      <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-        <button
-          type="button"
-          disabled={loading || (config.ok && !ready)}
-          onClick={openCheckout}
-          className="rounded-lg bg-zinc-950 px-5 py-3 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-40 dark:bg-white dark:text-zinc-950"
+      <p className="mt-6 text-center">
+        <Link
+          href="/pricing"
+          className="text-sm font-medium text-zinc-500 underline-offset-4 hover:text-zinc-950 hover:underline dark:hover:text-white"
         >
-          {loading
-            ? "確認付款中…"
-            : ready || !config.ok
-              ? "一次付清，解鎖這份報告"
-              : "載入結帳…"}
-        </button>
-        {SUBSCRIPTIONS_ENABLED ? (
-          <Link
-            href="/pricing"
-            className="rounded-lg border border-zinc-300 px-5 py-3 text-sm font-semibold text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-900"
-          >
-            查看訂閱方案
-          </Link>
-        ) : null}
-      </div>
+          查看完整方案說明
+        </Link>
+      </p>
       {error ? (
         <p role="alert" className="mt-4 text-center text-sm text-red-600">
           {error}
