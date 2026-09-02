@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Paddle subscription layer, parked until a database is provisioned.
+    "disabled/**",
   ]),
 ]);
 
