@@ -40,8 +40,31 @@ function paidPlanFromToken(value: string | undefined): PaidPlan | null {
   return valid ? (plan as PaidPlan) : null;
 }
 
-function currentPeriod(): string {
-  return new Date().toISOString().slice(0, 7);
+const TAIPEI_TIME_ZONE = "Asia/Taipei";
+
+function taipeiDateParts(date = new Date()): { year: number; month: number } {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: TAIPEI_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+  }).formatToParts(date);
+  const value = (type: string) =>
+    Number(parts.find((part) => part.type === type)?.value ?? "0");
+  return { year: value("year"), month: value("month") };
+}
+
+function currentPeriod(date = new Date()): string {
+  const { year, month } = taipeiDateParts(date);
+  return `${year}-${String(month).padStart(2, "0")}`;
+}
+
+function nextTaipeiMonthStart(date = new Date()): Date {
+  const { year, month } = taipeiDateParts(date);
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextYear = month === 12 ? year + 1 : year;
+  return new Date(
+    `${nextYear}-${String(nextMonth).padStart(2, "0")}-01T00:00:00+08:00`,
+  );
 }
 
 export async function hasPaidAccess(): Promise<boolean> {
@@ -63,9 +86,7 @@ export async function hasUsedFreeReview(): Promise<boolean> {
 
 export function freeReviewCookieHeader(): string {
   const now = new Date();
-  const nextMonth = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
-  );
+  const nextMonth = nextTaipeiMonthStart(now);
   const maxAge = Math.max(60, Math.floor((nextMonth.getTime() - now.getTime()) / 1000));
   const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
   return `${FREE_REVIEW_COOKIE}=${currentPeriod()}; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=Lax${secure}`;

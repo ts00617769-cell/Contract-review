@@ -1,10 +1,8 @@
 import Link from "next/link";
-import { SiteHeader } from "@/components/SiteHeader";
 
 export default function NotFound() {
   return (
-    <main id="main-content" className="mx-auto w-full max-w-6xl px-4 pb-20 pt-8 md:pt-12">
-      <SiteHeader />
+    <main id="main-content" className="mx-auto w-full max-w-6xl px-4 pb-20">
       <section className="mx-auto mt-24 max-w-lg text-center">
         <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">404</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">找不到這個頁面</h1>

@@ -5,6 +5,7 @@ import { SUPPORT_EMAIL } from "@/lib/site";
 export const metadata: Metadata = {
   title: "隱私權政策｜契約哨兵",
   alternates: { canonical: "/privacy" },
+  openGraph: { url: "/privacy" },
 };
 
 export default function PrivacyPage() {
@@ -35,7 +36,7 @@ export default function PrivacyPage() {
       <section>
         <h2 className="text-base font-semibold text-zinc-950 dark:text-white">3. Cookie</h2>
         <p className="mt-2">
-          免費額度 Cookie 記錄本月是否已使用一次免費分析。付費 Cookie
+          免費額度 Cookie 記錄本月（台灣時間）是否已使用一次免費分析。付費 Cookie
           記錄此裝置已解鎖及其有效期間（單次解鎖於使用後清除；月繳約 31 天、年繳約 366 天）。這些 Cookie 為提供服務所必需，非廣告追蹤。
         </p>
       </section>

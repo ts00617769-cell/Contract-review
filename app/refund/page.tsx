@@ -5,6 +5,7 @@ import { SUPPORT_EMAIL } from "@/lib/site";
 export const metadata: Metadata = {
   title: "退款政策｜契約哨兵",
   alternates: { canonical: "/refund" },
+  openGraph: { url: "/refund" },
 };
 
 export default function RefundPage() {

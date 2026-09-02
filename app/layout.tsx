@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Noto_Sans_TC, Noto_Serif_TC } from "next/font/google";
 import { SiteFooter } from "@/components/SiteFooter";
+import { SiteHeader } from "@/components/SiteHeader";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -28,7 +29,7 @@ export const metadata: Metadata = {
     url: "/",
     siteName: "契約哨兵",
     title: "契約哨兵｜台灣接案合約風險檢查",
-    description: "抓出無限修改、延期付款與智慧財產權陷阱，並產生可談判的替代條款。",
+    description: "免費先看風險結論；解鎖後產生可談判的替代條款。",
   },
   twitter: {
     card: "summary",
@@ -52,6 +53,9 @@ export default function RootLayout({
         >
           跳到主要內容
         </a>
+        <header className="mx-auto w-full max-w-6xl px-4 pt-8 md:pt-12">
+          <SiteHeader />
+        </header>
         {children}
         <SiteFooter />
       </body>

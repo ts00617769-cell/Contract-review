@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { PricingTable } from "@/components/PricingTable";
-import { SiteHeader } from "@/components/SiteHeader";
 import { countryFromHeaders } from "@/lib/request-country";
 
 export const metadata: Metadata = {
   title: "方案與價格｜契約哨兵",
   alternates: { canonical: "/pricing" },
+  openGraph: { url: "/pricing" },
 };
 
 export default async function PricingPage() {
@@ -15,8 +15,7 @@ export default async function PricingPage() {
   const customerEmail = null;
 
   return (
-    <main id="main-content" className="mx-auto w-full max-w-6xl px-4 pb-20 pt-8 md:pt-12">
-      <SiteHeader />
+    <main id="main-content" className="mx-auto w-full max-w-6xl px-4 pb-20">
       <header className="mx-auto mt-16 max-w-2xl text-center">
         <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">方案</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white md:text-4xl">

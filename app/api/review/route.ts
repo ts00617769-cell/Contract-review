@@ -74,7 +74,10 @@ export async function POST(request: Request) {
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: "請上傳 PDF 檔案。" }, { status: 400 });
+      return NextResponse.json(
+        { error: "請上傳 PDF、Word，或改用文字貼上。" },
+        { status: 400 },
+      );
     }
 
     if (file.size > MAX_BYTES) {

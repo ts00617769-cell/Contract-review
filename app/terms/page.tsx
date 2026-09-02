@@ -5,6 +5,7 @@ import { SUPPORT_EMAIL } from "@/lib/site";
 export const metadata: Metadata = {
   title: "服務條款｜契約哨兵",
   alternates: { canonical: "/terms" },
+  openGraph: { url: "/terms" },
 };
 
 export default function TermsPage() {
@@ -35,7 +36,7 @@ export default function TermsPage() {
       <section>
         <h2 className="text-base font-semibold text-zinc-950 dark:text-white">4. 使用者責任</h2>
         <p className="mt-2">
-          你應確保有權上傳或貼上該合約。請勿上傳他人機密文件若你無權處理。本服務可能誤判或漏判，簽約前請自行覆核並於需要時洽詢律師。
+          你應確保有權上傳或貼上該合約。請勿上傳你無權處理的他人機密文件。本服務可能誤判或漏判，簽約前請自行覆核並於需要時洽詢律師。
         </p>
       </section>
       <section>

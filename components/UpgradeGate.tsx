@@ -172,6 +172,7 @@ export function UpgradeGate({ onUnlocked }: UpgradeGateProps) {
       settings: {
         displayMode: "overlay",
         variant: "one-page",
+        successUrl: `${window.location.origin}/welcome`,
       },
     });
   }

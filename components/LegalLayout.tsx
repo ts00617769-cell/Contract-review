@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { SiteHeader } from "@/components/SiteHeader";
 
 export function LegalLayout({
   title,
@@ -12,8 +11,7 @@ export function LegalLayout({
   children: ReactNode;
 }) {
   return (
-    <main id="main-content" className="mx-auto w-full max-w-6xl px-4 pb-20 pt-8 md:pt-12">
-      <SiteHeader />
+    <main id="main-content" className="mx-auto w-full max-w-6xl px-4 pb-20">
       <article className="mx-auto mt-12 max-w-3xl">
         <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">契約哨兵</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">{title}</h1>
